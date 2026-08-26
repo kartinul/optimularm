@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "620335313499",
+    "project_id": "optimularm",
+    "storage_bucket": "optimularm.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:620335313499:android:085e9355aec0a81392857e",
+        "android_client_info": {
+          "package_name": "io.github.kartinul"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyClsCFuO42iHGJK2iWX1Hcucz77wQt4uyc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

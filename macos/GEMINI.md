@@ -1,0 +1,1 @@
+keep code minimal af, i wanna learn not let u code it, do not code too much at a time, if i give u instruction to code a bit tooo much stop and just code a little, i read and approve everything

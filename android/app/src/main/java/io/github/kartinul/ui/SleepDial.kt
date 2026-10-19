@@ -38,16 +38,28 @@ import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.unit.dp
 import io.github.kartinul.R
 import java.util.Locale
+import kotlin.math.abs
 import kotlin.math.atan2
 import kotlin.math.cos
 import kotlin.math.roundToInt
 import kotlin.math.sin
 
 const val DAY_MINUTES = 24 * 60
-private const val SNAP_MINUTES = 15
+private const val SNAP_MINUTES = 5
+private const val QUARTER = 15
+private const val MAGNET = 3.0 // a quarter pulls the handle in from this many minutes
+private const val STICKY = 6.0 // once on a quarter, the handle stays until dragged this far
 
-/** Handles only stop on :00 :15 :30 :45. */
-fun snapMinutes(raw: Double): Int = (raw / SNAP_MINUTES).roundToInt() * SNAP_MINUTES % DAY_MINUTES
+/** Minutes between two times on the 24h ring, the short way round. */
+private fun ringDistance(a: Double, b: Int): Double = abs(a - b).let { minOf(it, DAY_MINUTES - it) }
+
+/** 5-minute steps, with :00 :15 :30 :45 magnetic (pull in from ±3) and sticky (hold until ±6). */
+fun snapMinutes(raw: Double, current: Int): Int {
+    if (current % QUARTER == 0 && ringDistance(raw, current) < STICKY) return current
+    val quarter = (raw / QUARTER).roundToInt() * QUARTER % DAY_MINUTES
+    if (ringDistance(raw, quarter) <= MAGNET) return quarter
+    return (raw / SNAP_MINUTES).roundToInt() * SNAP_MINUTES % DAY_MINUTES
+}
 
 fun String.toMinutes(): Int = split(":").map(String::toInt).let { (hour, minute) -> hour * 60 + minute }
 fun Int.toTime(): String = String.format(Locale.ROOT, "%02d:%02d", this / 60, this % 60)
@@ -60,9 +72,9 @@ private fun pointOnRing(center: Offset, radius: Float, minutes: Int) = Offset(
     center.y + radius * sin(minutes.toRadians()).toFloat(),
 )
 
-private fun minutesAt(center: Offset, point: Offset): Int {
+private fun minutesAt(center: Offset, point: Offset, current: Int): Int {
     val degrees = Math.toDegrees(atan2((point.x - center.x).toDouble(), (center.y - point.y).toDouble()))
-    return snapMinutes((degrees + 360) % 360 * 4)
+    return snapMinutes((degrees + 360) % 360 * 4, current)
 }
 
 private enum class Handle { Bedtime, Wake }
@@ -116,15 +128,20 @@ fun SleepDial(
                         },
                         onDragCancel = { dragged = null },
                     ) { change, _ ->
-                        val minutes = minutesAt(ringCenter, change.position)
+                        val current = if (dragged == Handle.Bedtime) bed else wake
+                        val minutes = minutesAt(ringCenter, change.position, current)
                         val moved = when (dragged) {
                             Handle.Bedtime -> (bed != minutes).also { bed = minutes }
                             Handle.Wake -> (wake != minutes).also { wake = minutes }
                             null -> false
                         }
                         if (moved) haptics.performHapticFeedback(
-                            // a heavier click on whole hours, a crisp tick on each quarter
-                            if (minutes % 60 == 0) HapticFeedbackType.GestureThresholdActivate else HapticFeedbackType.SegmentTick
+                            // heavy on whole hours, firm on quarters, light on the 5-minute steps between
+                            when {
+                                minutes % 60 == 0 -> HapticFeedbackType.GestureThresholdActivate
+                                minutes % QUARTER == 0 -> HapticFeedbackType.SegmentTick
+                                else -> HapticFeedbackType.SegmentFrequentTick
+                            }
                         )
                     }
                 }

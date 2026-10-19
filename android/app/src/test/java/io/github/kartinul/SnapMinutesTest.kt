@@ -6,11 +6,17 @@ import org.junit.Test
 
 class SnapMinutesTest {
     @Test
-    fun roundsUpToQuarter() = assertEquals(15, snapMinutes(9.0))
+    fun fiveMinuteStepsBetweenQuarters() = assertEquals(10, snapMinutes(9.0, current = 5))
 
     @Test
-    fun roundsDownToQuarter() = assertEquals(30, snapMinutes(37.0))
+    fun quarterPullsInFromThreeMinutes() = assertEquals(15, snapMinutes(12.5, current = 10))
 
     @Test
-    fun nearMidnightWrapsToZero() = assertEquals(0, snapMinutes(1435.0))
+    fun quarterHoldsUntilSixMinutesAway() = assertEquals(15, snapMinutes(20.0, current = 15))
+
+    @Test
+    fun leavesQuarterPastSixMinutes() = assertEquals(20, snapMinutes(21.5, current = 15))
+
+    @Test
+    fun midnightIsStickyAcrossTheWrap() = assertEquals(0, snapMinutes(1436.0, current = 0))
 }

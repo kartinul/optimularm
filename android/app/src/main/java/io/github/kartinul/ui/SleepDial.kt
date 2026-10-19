@@ -2,16 +2,12 @@ package io.github.kartinul.ui
 
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.gestures.detectDragGestures
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -23,7 +19,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
@@ -31,7 +26,6 @@ import androidx.compose.ui.graphics.drawscope.translate
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.drawText
@@ -72,11 +66,8 @@ fun SleepDial(
     wakeTime: String,
     onBedtimeChange: (String) -> Unit,
     onWakeTimeChange: (String) -> Unit,
-    onBedtimeClick: () -> Unit,
-    onWakeTimeClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val context = LocalContext.current
     val haptics = LocalHapticFeedback.current
     val textMeasurer = rememberTextMeasurer()
     var bed by remember(bedtime) { mutableIntStateOf(bedtime.toMinutes()) }
@@ -166,19 +157,14 @@ fun SleepDial(
             drawHandle(wake, alarmIcon)
         }
 
-        Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(4.dp)) {
-            DialTime(displayTime(context, bed.toTime()), bedIcon, colors.onSurfaceVariant, onBedtimeClick)
-            DialTime(displayTime(context, wake.toTime()), alarmIcon, colors.onSurface, onWakeTimeClick)
-        }
-    }
-}
-
-@Composable
-private fun DialTime(time: String, icon: Painter, color: Color, onClick: () -> Unit) {
-    Surface(onClick = onClick, shape = MaterialTheme.shapes.large, color = Color.Transparent) {
-        Row(Modifier.padding(horizontal = 12.dp, vertical = 4.dp), verticalAlignment = Alignment.CenterVertically) {
-            Icon(icon, contentDescription = null, tint = color, modifier = Modifier.padding(end = 6.dp))
-            Text(time, style = MaterialTheme.typography.headlineMedium, color = color)
+        val window = (wake - bed + DAY_MINUTES) % DAY_MINUTES
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            Text(
+                if (window % 60 == 0) "${window / 60} h" else "${window / 60} h ${window % 60} m",
+                style = MaterialTheme.typography.displayMedium,
+                color = colors.onSurface,
+            )
+            Text("sleep window", style = MaterialTheme.typography.titleSmall, color = colors.onSurfaceVariant)
         }
     }
 }

@@ -115,7 +115,7 @@ fun App() {
                 Text("Pair with your Mac in Settings")
             }
             current != null ->
-                ClockScreen(current, ringsAt, latestSleep?.sleepTime, permissions.count { !it.granted }, content)
+                ClockScreen(current, ringsAt, permissions.count { !it.granted }, content)
         }
     }
 }

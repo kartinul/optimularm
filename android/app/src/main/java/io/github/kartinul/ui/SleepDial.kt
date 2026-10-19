@@ -3,12 +3,10 @@ package io.github.kartinul.ui
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -155,16 +153,6 @@ fun SleepDial(
             }
             drawHandle(bed, bedIcon)
             drawHandle(wake, alarmIcon)
-        }
-
-        val window = (wake - bed + DAY_MINUTES) % DAY_MINUTES
-        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            Text(
-                if (window % 60 == 0) "${window / 60} h" else "${window / 60} h ${window % 60} m",
-                style = MaterialTheme.typography.displayMedium,
-                color = colors.onSurface,
-            )
-            Text("sleep window", style = MaterialTheme.typography.titleSmall, color = colors.onSurfaceVariant)
         }
     }
 }

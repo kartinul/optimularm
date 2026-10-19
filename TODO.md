@@ -83,7 +83,7 @@ The schema is in `CLAUDE.md`.
 - [x] Clock tab: last sleep time, permission health
 - [x] Clock tab: the "in 14 hours" text only refreshes on settings change; tick it every minute
 - [x] Settings tab: Unpair button (today Pair disables itself and you can't undo it). Unpair = set `status: "pending"` / clear the pair; once real pairing exists, also forget the stored `pairId`
-- [ ] Default bedtime 12:00 draws a 20 h arc on first launch; consider 22:00
+- [x] Default bedtime 12:00 draws a 20 h arc on first launch → defaults are now 00:00 → 07:00
 - [x] `BootReceiver`: reschedule the check from `settings`
 - [x] WorkManager 15-minute fallback poll
 - [x] Own alarm, finish it: snooze, alarm volume/vibration, reschedule after reboot, Samsung battery "sleeping apps" exemption

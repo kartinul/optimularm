@@ -47,7 +47,7 @@ xcodebuild -project macos/optimularm.xcodeproj -scheme optimularm build
 - Sleep is display-based: `NSWorkspace.screensDidSleepNotification` counts as "user went to sleep". The Mac writes the event immediately, because timers may not run once the system sleeps.
 - Assume the user falls asleep 10 minutes after the display sleeps.
 - The user sets the **wake time** on either device (`settings/{pairId}.wakeTime`). Both apps read and write `settings` with live listeners; last write wins.
-- Only sleep events after `settings.sleepCutoff` (default `"12:00"`) count for tonight's alarm. On the phone it is the bedtime handle of the Clock dial.
+- Only sleep events after `settings.sleepCutoff` (default `"00:00"`) count for tonight's alarm. On the phone it is the bedtime handle of the Clock dial.
 - As soon as Android receives a wake time, it **must** set its own **default alarm** at that time (`AlarmManager.setAlarmClock` → `AlarmReceiver` → full-screen notification → `RingActivity`), and schedule an internal check with `AlarmManager.setExactAndAllowWhileIdle` at wake − 90 min.
 - A sleep event holds only `sleepTime`. The Mac does nothing when the display wakes; sleeping again just writes a newer event.
 - At the check, Android reads the latest sleep event:
@@ -55,7 +55,7 @@ xcodebuild -project macos/optimularm.xcodeproj -scheme optimularm build
   - none arrived → do nothing; the default alarm rings.
 - **Late sleep** (the sleep event arrives after wake − 90): set the alarm at `sleepTime + 30min`.
 - The app rings its own alarm, not Samsung Clock: Samsung Clock can't remove alarms silently (`ACTION_DISMISS_ALARM` opens its UI), while the app can cancel and move its own.
-- Reliability layers: the Firestore listener (primary), a battery-optimization exemption, `SCHEDULE_EXACT_ALARM`, a `BootReceiver`, and a WorkManager 15-minute fallback poll. No foreground service yet.
+- Reliability layers: the Firestore listener (primary), a battery-optimization exemption, `SCHEDULE_EXACT_ALARM`, a `BootReceiver`, and a WorkManager 15-minute fallback poll. `RingService` (a foreground service) plays the alarm.
 - The Mac app is menu-bar only (`.accessory`). It switches to `.regular` only while Settings is open, and uses `SMAppService` for launch at login.
 - No `alarmState` doc: only Android needs the real ring time, and it keeps that locally.
 - Auth is Firebase Anonymous Auth on both devices. The devices are linked by a `pairId` via QR: the Mac shows the code and the phone scans it.
@@ -72,7 +72,7 @@ Also in `shared/firestore-schema.md`; rules in `shared/firestore.rules`.
   "status": "pending|paired", "createdAt", "pairedAt" }
 
 // settings/{pairId}                        — both read and write, live
-{ "wakeTime": "08:00", "alarmOn": true, "sleepCutoff": "12:00", "lastUpdated" }
+{ "wakeTime": "07:00", "alarmOn": true, "sleepCutoff": "00:00", "lastUpdated" }
 
 // pairings/{pairId}/sleepEvents/{eventId}  — Mac writes
 { "sleepTime" }

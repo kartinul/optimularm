@@ -6,7 +6,7 @@
   "status": "pending|paired", "createdAt", "pairedAt" }
 
 // settings/{pairId}                        — both read and write, live, last write wins
-{ "wakeTime": "08:00", "alarmOn": true, "sleepCutoff": "12:00", "lastUpdated" }
+{ "wakeTime": "07:00", "alarmOn": true, "sleepCutoff": "00:00", "lastUpdated" }
 
 // pairings/{pairId}/sleepEvents/{eventId}  — Mac writes on display sleep
 { "sleepTime" }

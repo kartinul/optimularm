@@ -6,9 +6,9 @@
 import FirebaseFirestore
 
 struct WakeSettings {
-    var wakeTime = "08:00"
+    var wakeTime = "07:00"
     var alarmOn = true
-    var sleepCutoff = "12:00"
+    var sleepCutoff = "00:00"
 }
 
 private func settingsDoc(_ pairId: String) -> DocumentReference {

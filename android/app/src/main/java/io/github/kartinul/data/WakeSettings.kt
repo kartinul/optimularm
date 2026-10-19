@@ -14,9 +14,9 @@ import kotlinx.coroutines.tasks.await
 import java.util.Date
 
 data class WakeSettings(
-    val wakeTime: String = "08:00",
+    val wakeTime: String = "07:00",
     val alarmOn: Boolean = true,
-    val sleepCutoff: String = "12:00",
+    val sleepCutoff: String = "00:00",
 )
 
 data class SleepEvent(val id: String, val sleepTime: Long)

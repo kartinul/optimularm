@@ -9,9 +9,12 @@ data class AlarmPrefs(
     val volume: Float = 1f,
     val gradual: Boolean = true,
     val vibrate: Boolean = true,
-    val snoozeMinutes: Int = 9,
+    val snoozeMinutes: Int = 10,
     val maxSnoozes: Int = 3,
 )
+
+val SNOOZE_LENGTHS = listOf(5, 10, 15)
+val SNOOZE_LIMITS = listOf(1, 2, 3)
 
 private fun prefs(context: Context) = context.getSharedPreferences("ring", Context.MODE_PRIVATE)
 
@@ -22,8 +25,10 @@ fun loadAlarmPrefs(context: Context): AlarmPrefs = prefs(context).let {
         volume = it.getFloat("volume", defaults.volume),
         gradual = it.getBoolean("gradual", defaults.gradual),
         vibrate = it.getBoolean("vibrate", defaults.vibrate),
-        snoozeMinutes = it.getInt("snoozeMinutes", defaults.snoozeMinutes),
-        maxSnoozes = it.getInt("maxSnoozes", defaults.maxSnoozes),
+        // older builds offered other values; fall back to the default if a stored one is gone
+        snoozeMinutes = it.getInt("snoozeMinutes", defaults.snoozeMinutes).takeIf(SNOOZE_LENGTHS::contains)
+            ?: defaults.snoozeMinutes,
+        maxSnoozes = it.getInt("maxSnoozes", defaults.maxSnoozes).takeIf(SNOOZE_LIMITS::contains) ?: defaults.maxSnoozes,
     )
 }
 

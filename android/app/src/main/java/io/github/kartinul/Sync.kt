@@ -34,7 +34,9 @@ suspend fun sync(context: Context) {
         return
     }
     val now = System.currentTimeMillis()
-    val from = Calendar.getInstance().apply { timeInMillis = maxOf(now, doneWake(context)) }
+    // an alarm rings at most a cycle before its wake time, so a later "done" mark is stale; ignore it
+    val done = doneWake(context).takeIf { it <= now + CYCLE } ?: 0
+    val from = Calendar.getInstance().apply { timeInMillis = maxOf(now, done) }
     val wake = nextOccurrence(settings.wakeTime, from).timeInMillis
     val sleep = fetchLatestSleep(id, after = cutoffBefore(wake, settings.sleepCutoff))
     val ring = ringTime(wake, sleep?.sleepTime, now)

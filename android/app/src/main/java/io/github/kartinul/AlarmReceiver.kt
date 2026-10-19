@@ -5,13 +5,18 @@ import android.app.PendingIntent
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
+import android.content.SharedPreferences
 import androidx.core.content.edit
 import io.github.kartinul.data.loadAlarmPrefs
 import io.github.kartinul.data.setSnoozesUsed
 import io.github.kartinul.data.snoozesUsed
+import kotlinx.coroutines.channels.awaitClose
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.callbackFlow
 import java.util.Calendar
 
 private const val SNOOZE = "snooze"
+private const val SNOOZED_UNTIL = "snoozedUntil"
 private const val RING_AT = "ringAt"
 private const val WAKE = "wake"
 private const val DONE_WAKE = "doneWake"
@@ -64,17 +69,30 @@ fun snooze(context: Context) {
     )
     val millis = System.currentTimeMillis() + loadAlarmPrefs(context).snoozeMinutes * MINUTE
     setSnoozesUsed(context, snoozesUsed(context) + 1)
+    alarmPrefs(context).edit { putLong(SNOOZED_UNTIL, millis) }
     context.getSystemService(AlarmManager::class.java)
         .setAlarmClock(AlarmManager.AlarmClockInfo(millis, showIntent), intent)
 }
 
-/** Stops any ringing, drops a pending snooze and skips the next ring; run sync() after to set the following one. */
-fun skipNextAlarm(context: Context) {
+/** When a pending snooze will ring, or null. */
+fun snoozedUntil(context: Context): Long? =
+    alarmPrefs(context).getLong(SNOOZED_UNTIL, 0).takeIf { it > System.currentTimeMillis() }
+
+/** snoozedUntil(), updated live whenever the alarm prefs change (snooze, cancel, ring). */
+fun snoozedUntilFlow(context: Context): Flow<Long?> = callbackFlow {
+    val prefs = alarmPrefs(context)
+    val listener = SharedPreferences.OnSharedPreferenceChangeListener { _, _ -> trySend(snoozedUntil(context)) }
+    trySend(snoozedUntil(context))
+    prefs.registerOnSharedPreferenceChangeListener(listener)
+    awaitClose { prefs.unregisterOnSharedPreferenceChangeListener(listener) }
+}
+
+/** Stops any ringing and drops a pending snooze. The next regular alarm stays. */
+fun cancelSnooze(context: Context) {
     stopRinging(context)
     context.getSystemService(AlarmManager::class.java).cancel(snoozeIntent(context))
     setSnoozesUsed(context, 0)
-    val prefs = alarmPrefs(context)
-    prefs.edit { putLong(DONE_WAKE, prefs.getLong(WAKE, 0)).remove(RING_AT) }
+    alarmPrefs(context).edit { remove(SNOOZED_UNTIL) }
 }
 
 fun cancelAlarm(context: Context) {
@@ -84,6 +102,7 @@ fun cancelAlarm(context: Context) {
 
 class AlarmReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
+        alarmPrefs(context).edit { remove(SNOOZED_UNTIL) }
         if (!intent.getBooleanExtra(SNOOZE, false)) {
             val prefs = alarmPrefs(context)
             prefs.edit {

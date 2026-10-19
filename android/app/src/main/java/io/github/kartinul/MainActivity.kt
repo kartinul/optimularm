@@ -24,8 +24,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
-import kotlinx.coroutines.launch
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
@@ -66,7 +64,7 @@ fun App() {
     val settings by remember(pairedId) { pairedId?.let(::wakeSettingsFlow) ?: flowOf(null) }.collectAsState(null)
     val latestSleep by remember(pairedId) { pairedId?.let(::latestSleepFlow) ?: flowOf(null) }.collectAsState(null)
     var ringsAt by remember { mutableStateOf(ringAt(context)) }
-    val scope = rememberCoroutineScope()
+    val snoozed by remember { snoozedUntilFlow(context) }.collectAsState(null)
     var permissions by remember { mutableStateOf(checkPermissions(context)) }
     LifecycleResumeEffect(Unit) {
         permissions = checkPermissions(context)
@@ -114,13 +112,7 @@ fun App() {
                 Text("Pair with your Mac in Settings")
             }
             current != null ->
-                ClockScreen(current, ringsAt, permissions.count { !it.granted }, onSkip = {
-                    skipNextAlarm(context)
-                    scope.launch {
-                        runCatching { sync(context) }
-                        ringsAt = ringAt(context)
-                    }
-                }, content)
+                ClockScreen(current, ringsAt, permissions.count { !it.granted }, snoozedUntil = snoozed, onCancelSnooze = { cancelSnooze(context) }, content)
         }
     }
 }

@@ -28,13 +28,14 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.core.content.IntentCompat
 import io.github.kartinul.data.AlarmPrefs
+import io.github.kartinul.data.SNOOZE_LENGTHS
+import io.github.kartinul.data.SNOOZE_LIMITS
 import io.github.kartinul.data.loadAlarmPrefs
 import io.github.kartinul.data.saveAlarmPrefs
+import io.github.kartinul.data.setSnoozesUsed
 import io.github.kartinul.startRinging
 import kotlin.math.roundToInt
 
-private val SNOOZE_LENGTHS = listOf(5, 9, 10, 15)
-private val SNOOZE_LIMITS = listOf(0, 1, 3, 5)
 
 /** Sound, volume, vibration and snooze settings, stored on the phone. */
 @Composable
@@ -79,13 +80,16 @@ fun AlarmSettings() {
     ChoiceItem("Snooze length", SNOOZE_LENGTHS, alarm.snoozeMinutes, { "$it min" }) {
         update(alarm.copy(snoozeMinutes = it))
     }
-    ChoiceItem("Snoozes allowed", SNOOZE_LIMITS, alarm.maxSnoozes, { if (it == 0) "Off" else "$it" }) {
+    ChoiceItem("Snoozes allowed", SNOOZE_LIMITS, alarm.maxSnoozes, { "$it" }) {
         update(alarm.copy(maxSnoozes = it))
     }
     ListItem(
         headlineContent = { Text("Test alarm") },
         supportingContent = { Text("Rings now with these settings") },
-        trailingContent = { TextButton(onClick = { startRinging(context) }) { Text("Ring") } },
+        trailingContent = { TextButton(onClick = {
+            setSnoozesUsed(context, 0)
+            startRinging(context)
+        }) { Text("Ring") } },
     )
 }
 

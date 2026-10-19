@@ -47,7 +47,8 @@ fun ClockScreen(
     settings: WakeSettings,
     ringAt: Long?,
     missingPermissions: Int,
-    onSkip: () -> Unit,
+    snoozedUntil: Long?,
+    onCancelSnooze: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val context = LocalContext.current
@@ -59,7 +60,9 @@ fun ClockScreen(
             now = System.currentTimeMillis()
         }
     }
-    val ringing = settings.alarmOn && ringAt != null
+    // a pending snooze rings before the next regular alarm, so it takes the top spot
+    val next = snoozedUntil ?: ringAt.takeIf { settings.alarmOn }
+    val ringing = next != null
     val colors = MaterialTheme.colorScheme
 
     Column(
@@ -69,12 +72,16 @@ fun ClockScreen(
         Spacer(Modifier.weight(1f))
         // both lines always render, so toggling never changes the layout height
         Text(
-            if (ringing) DateFormat.getTimeFormat(context).format(ringAt) else displayTime(context, settings.wakeTime),
+            if (ringing) DateFormat.getTimeFormat(context).format(next) else displayTime(context, settings.wakeTime),
             style = MaterialTheme.typography.displayMedium,
             color = if (ringing) colors.onSurface else colors.outline,
         )
         Text(
-            if (ringing) timeUntil(ringAt!! - now) else "off",
+            when {
+                snoozedUntil != null -> "snoozed · " + timeUntil(snoozedUntil - now)
+                next != null -> timeUntil(next - now)
+                else -> "off"
+            },
             style = MaterialTheme.typography.titleMedium,
             color = colors.onSurfaceVariant,
         )
@@ -89,7 +96,7 @@ fun ClockScreen(
         Spacer(Modifier.weight(1f))
         Row(horizontalArrangement = Arrangement.spacedBy(16.dp), verticalAlignment = Alignment.CenterVertically) {
             BigToggle(settings.alarmOn) { saveWakeSettings("alarmOn" to it) }
-            SkipButton(enabled = ringing, onClick = onSkip)
+            CancelSnoozeButton(enabled = snoozedUntil != null, onClick = onCancelSnooze)
         }
         Box(Modifier.weight(1f).padding(top = 16.dp)) {
             if (missingPermissions > 0) Text(
@@ -135,9 +142,9 @@ private fun BigToggle(on: Boolean, onChange: (Boolean) -> Unit) {
     }
 }
 
-/** Round red ✕, as tall as the toggle: cancels the snooze and the next ring. */
+/** Round red ✕, as tall as the toggle: cancels a pending snooze. */
 @Composable
-private fun SkipButton(enabled: Boolean, onClick: () -> Unit) {
+private fun CancelSnoozeButton(enabled: Boolean, onClick: () -> Unit) {
     val colors = MaterialTheme.colorScheme
     val haptics = LocalHapticFeedback.current
     Box(
@@ -145,14 +152,14 @@ private fun SkipButton(enabled: Boolean, onClick: () -> Unit) {
             .size(TRACK_HEIGHT)
             .clip(CircleShape)
             .background(if (enabled) colors.errorContainer else colors.surfaceContainerHigh)
-            .clickable(enabled = enabled, role = Role.Button, onClickLabel = "Cancel next alarm") {
+            .clickable(enabled = enabled, role = Role.Button, onClickLabel = "Cancel snooze") {
                 haptics.performHapticFeedback(HapticFeedbackType.Reject)
                 onClick()
             },
         contentAlignment = Alignment.Center,
     ) {
         Icon(
-            painterResource(R.drawable.ic_close), contentDescription = "Cancel next alarm",
+            painterResource(R.drawable.ic_close), contentDescription = "Cancel snooze",
             tint = if (enabled) colors.onErrorContainer else colors.outline,
             modifier = Modifier.size(36.dp),
         )

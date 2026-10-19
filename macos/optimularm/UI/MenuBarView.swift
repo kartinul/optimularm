@@ -62,13 +62,11 @@ private struct AlarmPanel: View {
 
             VStack(spacing: 0) {
                 Row(icon: "alarm", title: "Wake up") {
-                    DatePicker("", selection: timeBinding("wakeTime", settings.wakeTime), displayedComponents: .hourAndMinute)
-                        .labelsHidden()
+                    QuarterStepper(time: settings.wakeTime) { saveSettings(pairId, ["wakeTime": $0]) }
                 }
                 Divider()
                 Row(icon: "bed.double", title: "Bedtime") {
-                    DatePicker("", selection: timeBinding("sleepCutoff", settings.sleepCutoff), displayedComponents: .hourAndMinute)
-                        .labelsHidden()
+                    QuarterStepper(time: settings.sleepCutoff) { saveSettings(pairId, ["sleepCutoff": $0]) }
                 }
                 Divider()
                 Row(icon: "moon.zzz", title: "Last sleep") {
@@ -80,10 +78,6 @@ private struct AlarmPanel: View {
             .background(.quinary, in: RoundedRectangle(cornerRadius: 10))
         }
         .padding(16)
-    }
-
-    private func timeBinding(_ field: String, _ time: String) -> Binding<Date> {
-        Binding(get: { timeDate(time) }, set: { saveSettings(pairId, [field: timeString($0)]) })
     }
 }
 
@@ -121,5 +115,30 @@ private struct PairPanel: View {
         }
         .padding(20)
         .frame(maxWidth: .infinity)
+    }
+}
+
+/** "8:15 AM" plus a stepper that moves in quarter hours: :00 :15 :30 :45. */
+private struct QuarterStepper: View {
+    let time: String
+    let onChange: (String) -> Void
+
+    var body: some View {
+        HStack(spacing: 6) {
+            Text(timeDate(time), style: .time)
+                .monospacedDigit()
+            Stepper("", onIncrement: { step(+1) }, onDecrement: { step(-1) })
+                .labelsHidden()
+        }
+    }
+
+    private func step(_ direction: Int) {
+        let minutes = Calendar.current.dateComponents([.hour, .minute], from: timeDate(time))
+        let total = (minutes.hour ?? 0) * 60 + (minutes.minute ?? 0)
+        // from an off-quarter time like 8:10, the first step lands on 8:15 (or 8:00)
+        let quarter = direction > 0 ? total / 15 + 1 : (total + 14) / 15 - 1
+        let next = (quarter * 15 + 24 * 60) % (24 * 60)
+        NSHapticFeedbackManager.defaultPerformer.perform(.alignment, performanceTime: .now)
+        onChange(String(format: "%02d:%02d", next / 60, next % 60))
     }
 }

@@ -4,6 +4,9 @@ import android.text.format.DateFormat
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -44,6 +47,7 @@ fun ClockScreen(
     settings: WakeSettings,
     ringAt: Long?,
     missingPermissions: Int,
+    onSkip: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val context = LocalContext.current
@@ -83,7 +87,10 @@ fun ClockScreen(
             modifier = Modifier.fillMaxWidth(),
         )
         Spacer(Modifier.weight(1f))
-        BigToggle(settings.alarmOn) { saveWakeSettings("alarmOn" to it) }
+        Row(horizontalArrangement = Arrangement.spacedBy(16.dp), verticalAlignment = Alignment.CenterVertically) {
+            BigToggle(settings.alarmOn) { saveWakeSettings("alarmOn" to it) }
+            SkipButton(enabled = ringing, onClick = onSkip)
+        }
         Box(Modifier.weight(1f).padding(top = 16.dp)) {
             if (missingPermissions > 0) Text(
                 "$missingPermissions permission(s) missing: fix them in Settings",
@@ -125,5 +132,29 @@ private fun BigToggle(on: Boolean, onChange: (Boolean) -> Unit) {
         ) {
             Icon(painterResource(R.drawable.ic_alarm), contentDescription = "Alarm", tint = icon, modifier = Modifier.size(32.dp))
         }
+    }
+}
+
+/** Round red ✕, as tall as the toggle: cancels the snooze and the next ring. */
+@Composable
+private fun SkipButton(enabled: Boolean, onClick: () -> Unit) {
+    val colors = MaterialTheme.colorScheme
+    val haptics = LocalHapticFeedback.current
+    Box(
+        Modifier
+            .size(TRACK_HEIGHT)
+            .clip(CircleShape)
+            .background(if (enabled) colors.errorContainer else colors.surfaceContainerHigh)
+            .clickable(enabled = enabled, role = Role.Button, onClickLabel = "Cancel next alarm") {
+                haptics.performHapticFeedback(HapticFeedbackType.Reject)
+                onClick()
+            },
+        contentAlignment = Alignment.Center,
+    ) {
+        Icon(
+            painterResource(R.drawable.ic_close), contentDescription = "Cancel next alarm",
+            tint = if (enabled) colors.onErrorContainer else colors.outline,
+            modifier = Modifier.size(36.dp),
+        )
     }
 }

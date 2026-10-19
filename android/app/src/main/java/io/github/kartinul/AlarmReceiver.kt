@@ -53,10 +53,12 @@ fun scheduleAlarm(context: Context, millis: Long, wake: Long, eventId: String?) 
 }
 
 /** A separate alarm (request code 2), so sync() never overwrites a snooze. */
+private fun snoozeIntent(context: Context): PendingIntent = PendingIntent.getBroadcast(
+    context, 2, Intent(context, AlarmReceiver::class.java).putExtra(SNOOZE, true), PendingIntent.FLAG_IMMUTABLE
+)
+
 fun snooze(context: Context) {
-    val intent = PendingIntent.getBroadcast(
-        context, 2, Intent(context, AlarmReceiver::class.java).putExtra(SNOOZE, true), PendingIntent.FLAG_IMMUTABLE
-    )
+    val intent = snoozeIntent(context)
     val showIntent = PendingIntent.getActivity(
         context, 0, Intent(context, MainActivity::class.java), PendingIntent.FLAG_IMMUTABLE
     )
@@ -64,6 +66,15 @@ fun snooze(context: Context) {
     setSnoozesUsed(context, snoozesUsed(context) + 1)
     context.getSystemService(AlarmManager::class.java)
         .setAlarmClock(AlarmManager.AlarmClockInfo(millis, showIntent), intent)
+}
+
+/** Stops any ringing, drops a pending snooze and skips the next ring; run sync() after to set the following one. */
+fun skipNextAlarm(context: Context) {
+    stopRinging(context)
+    context.getSystemService(AlarmManager::class.java).cancel(snoozeIntent(context))
+    setSnoozesUsed(context, 0)
+    val prefs = alarmPrefs(context)
+    prefs.edit { putLong(DONE_WAKE, prefs.getLong(WAKE, 0)).remove(RING_AT) }
 }
 
 fun cancelAlarm(context: Context) {

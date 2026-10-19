@@ -41,7 +41,7 @@ suspend fun sync(context: Context) {
     val wake = nextOccurrence(settings.wakeTime, from).timeInMillis
     val sleep = fetchLatestSleep(id, after = cutoffBefore(wake, settings.sleepCutoff))
     val calc = loadCalcPrefs(context)
-    val ring = ringTime(wake, sleep?.sleepTime, now, calc)
+    val ring = ringTime(wake, sleep?.sleepTime, calc)
     scheduleAlarm(context, ring, wake, sleep?.id)
     if (now < checkTime(wake, calc)) scheduleCheck(context, checkTime(wake, calc)) else cancelCheck(context)
     Log.i(TAG, "sync: wake=${Date(wake)} sleep=${sleep?.sleepTime?.let(::Date)} ring=${Date(ring)}")

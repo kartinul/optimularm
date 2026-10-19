@@ -79,13 +79,14 @@ private fun minutesAt(center: Offset, point: Offset, current: Int): Int {
 
 private enum class Handle { Bedtime, Wake }
 
-/** 24h ring with a draggable bedtime and wake handle. Changes are reported once the finger lifts. */
+/** 24h ring with a draggable bedtime and wake handle. [onDrag] fires live; the change callbacks once the finger lifts. */
 @Composable
 fun SleepDial(
     bedtime: String,
     wakeTime: String,
     onBedtimeChange: (String) -> Unit,
     onWakeTimeChange: (String) -> Unit,
+    onDrag: (bedtime: String, wakeTime: String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val context = LocalContext.current
@@ -135,11 +136,14 @@ fun SleepDial(
                             Handle.Wake -> (wake != minutes).also { wake = minutes }
                             null -> false
                         }
-                        if (moved) haptics.performHapticFeedback(
-                            // a strong click on every quarter, a light tick on the 5-minute steps between
-                            if (minutes % QUARTER == 0) HapticFeedbackType.GestureThresholdActivate
-                            else HapticFeedbackType.SegmentFrequentTick
-                        )
+                        if (moved) {
+                            haptics.performHapticFeedback(
+                                // a strong click on every quarter, a light tick on the 5-minute steps between
+                                if (minutes % QUARTER == 0) HapticFeedbackType.GestureThresholdActivate
+                                else HapticFeedbackType.SegmentFrequentTick
+                            )
+                            onDrag(bed.toTime(), wake.toTime())
+                        }
                     }
                 }
         ) {

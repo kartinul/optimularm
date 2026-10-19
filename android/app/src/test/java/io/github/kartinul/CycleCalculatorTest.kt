@@ -12,49 +12,45 @@ class CycleCalculatorTest {
     }.timeInMillis
 
     private val wake = at(20, 8, 0)
-    private val checkPassed = at(20, 6, 30)
 
     @Test
-    fun noSleepEventRingsAtWake() = assertEquals(wake, ringTime(wake, null, checkPassed))
-
-    @Test
-    fun beforeCheckRingsAtWake() = assertEquals(wake, ringTime(wake, at(19, 23, 50), at(20, 6, 0)))
+    fun noSleepEventRingsAtWake() = assertEquals(wake, ringTime(wake, null))
 
     @Test
     fun sleepBeforeMidnightRings15AfterLastBoundary() =
-        assertEquals(at(20, 7, 50), ringTime(wake, at(19, 23, 50), checkPassed))
+        assertEquals(at(20, 7, 50), ringTime(wake, at(19, 23, 50)))
 
     @Test
     fun earlyMorningSleepFitsOneCycle() =
-        assertEquals(wake, ringTime(wake, at(20, 6, 0), checkPassed))
+        assertEquals(wake, ringTime(wake, at(20, 6, 0)))
 
     @Test
-    fun boundaryExactlyAtWake() = assertEquals(wake, ringTime(wake, at(20, 0, 15), checkPassed))
+    fun boundaryExactlyAtWake() = assertEquals(wake, ringTime(wake, at(20, 0, 15)))
 
     @Test
-    fun boundary15AfterWakeRingsAtWake() = assertEquals(wake, ringTime(wake, at(20, 0, 30), checkPassed))
+    fun boundary15AfterWakeRingsAtWake() = assertEquals(wake, ringTime(wake, at(20, 0, 30)))
 
     @Test
-    fun boundary20AfterWakeIsTooFar() = assertEquals(at(20, 7, 5), ringTime(wake, at(20, 0, 35), checkPassed))
+    fun boundary20AfterWakeIsTooFar() = assertEquals(at(20, 7, 5), ringTime(wake, at(20, 0, 35)))
 
     @Test
-    fun boundary15BeforeWakeRingsAtWake() = assertEquals(wake, ringTime(wake, at(20, 0, 0), checkPassed))
+    fun boundary15BeforeWakeRingsAtWake() = assertEquals(wake, ringTime(wake, at(20, 0, 0)))
 
     @Test
-    fun lateSleepNaps30() = assertEquals(at(20, 7, 30), ringTime(wake, at(20, 7, 0), at(20, 7, 1)))
+    fun lateSleepNaps30() = assertEquals(at(20, 7, 30), ringTime(wake, at(20, 7, 0)))
 
     @Test
-    fun lateSleepCappedAtWake() = assertEquals(wake, ringTime(wake, at(20, 7, 45), at(20, 7, 46)))
+    fun lateSleepCappedAtWake() = assertEquals(wake, ringTime(wake, at(20, 7, 45)))
 
     @Test
     fun customPrefs() = assertEquals(
         at(20, 6, 40),
-        ringTime(wake, at(19, 23, 55), checkPassed, CalcPrefs(fallAsleep = 5, cycle = 100, feelGood = 0)),
+        ringTime(wake, at(19, 23, 55), CalcPrefs(fallAsleep = 5, cycle = 100, feelGood = 0)),
     )
 
     @Test
     fun noCycleFitsWhenFallAsleepIsLong() = assertEquals(
-        wake, ringTime(wake, at(20, 6, 25), checkPassed, CalcPrefs(fallAsleep = 45, feelGood = 0)),
+        wake, ringTime(wake, at(20, 6, 25), CalcPrefs(fallAsleep = 45, feelGood = 0)),
     )
 
     @Test

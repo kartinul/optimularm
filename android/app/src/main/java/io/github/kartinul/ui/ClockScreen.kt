@@ -25,6 +25,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableLongStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -38,7 +39,12 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 import io.github.kartinul.MINUTE
 import io.github.kartinul.R
+import io.github.kartinul.cutoffBefore
+import io.github.kartinul.data.SleepEvent
 import io.github.kartinul.data.WakeSettings
+import io.github.kartinul.data.loadCalcPrefs
+import io.github.kartinul.nextOccurrence
+import io.github.kartinul.ringTime
 import io.github.kartinul.data.saveWakeSettings
 import kotlinx.coroutines.delay
 
@@ -46,6 +52,7 @@ import kotlinx.coroutines.delay
 fun ClockScreen(
     settings: WakeSettings,
     ringAt: Long?,
+    latestSleep: SleepEvent?,
     missingPermissions: Int,
     snoozedUntil: Long?,
     onCancelSnooze: () -> Unit,
@@ -60,8 +67,19 @@ fun ClockScreen(
             now = System.currentTimeMillis()
         }
     }
+    // dragged (bedtime, wake), shown until sync lands a new ringAt or the saved settings move elsewhere
+    var preview by remember(ringAt) { mutableStateOf<Pair<String, String>?>(null) }
+    LaunchedEffect(settings) {
+        if (preview != settings.sleepCutoff to settings.wakeTime) preview = null
+    }
+    // same rule as sync(), without the already-dismissed check
+    val previewRing = preview?.let { (bed, wake) ->
+        val wakeAt = nextOccurrence(wake).timeInMillis
+        val sleep = latestSleep?.sleepTime?.takeIf { it in cutoffBefore(wakeAt, bed)..wakeAt }
+        ringTime(wakeAt, sleep, loadCalcPrefs(context))
+    }
     // a pending snooze rings before the next regular alarm, so it takes the top spot
-    val next = snoozedUntil ?: ringAt.takeIf { settings.alarmOn }
+    val next = snoozedUntil ?: (previewRing ?: ringAt).takeIf { settings.alarmOn }
     val ringing = next != null
     val colors = MaterialTheme.colorScheme
 
@@ -72,7 +90,7 @@ fun ClockScreen(
         Spacer(Modifier.weight(1f))
         // both lines always render, so toggling never changes the layout height
         Text(
-            if (ringing) DateFormat.getTimeFormat(context).format(next) else displayTime(context, settings.wakeTime),
+            if (ringing) DateFormat.getTimeFormat(context).format(next) else displayTime(context, preview?.second ?: settings.wakeTime),
             style = MaterialTheme.typography.displayMedium,
             color = if (ringing) colors.onSurface else colors.outline,
         )
@@ -91,6 +109,7 @@ fun ClockScreen(
             wakeTime = settings.wakeTime,
             onBedtimeChange = { saveWakeSettings("sleepCutoff" to it) },
             onWakeTimeChange = { saveWakeSettings("wakeTime" to it) },
+            onDrag = { bed, wake -> preview = bed to wake },
             modifier = Modifier.fillMaxWidth(),
         )
         Spacer(Modifier.weight(1f))

@@ -9,9 +9,9 @@ const val CYCLE = 90 * MINUTE
 fun checkTime(wake: Long, calc: CalcPrefs = CalcPrefs()) = wake - calc.cycle * MINUTE
 
 /** When to ring for [wake]: feelGood after the last cycle end within feelGood of [wake]. Never later than [wake]. */
-fun ringTime(wake: Long, sleep: Long?, now: Long, calc: CalcPrefs = CalcPrefs()): Long {
+fun ringTime(wake: Long, sleep: Long?, calc: CalcPrefs = CalcPrefs()): Long {
     val check = checkTime(wake, calc)
-    if (sleep == null || now < check) return wake
+    if (sleep == null) return wake
     if (sleep >= check) return minOf(sleep + calc.lateNap * MINUTE, wake)
     val asleep = sleep + calc.fallAsleep * MINUTE
     val cycle = calc.cycle * MINUTE

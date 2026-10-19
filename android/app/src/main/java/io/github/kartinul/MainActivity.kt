@@ -116,7 +116,7 @@ fun App() {
             current != null && tab == 1 ->
                 CalcScreen(current, latestSleep, onCalcChanged = { calcVersion++ }, content)
             current != null ->
-                ClockScreen(current, ringsAt, permissions.count { !it.granted }, snoozedUntil = snoozed, onCancelSnooze = { cancelSnooze(context) }, content)
+                ClockScreen(current, ringsAt, latestSleep, permissions.count { !it.granted }, snoozedUntil = snoozed, onCancelSnooze = { cancelSnooze(context) }, content)
         }
     }
 }

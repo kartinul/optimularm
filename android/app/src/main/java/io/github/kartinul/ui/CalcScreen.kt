@@ -90,8 +90,7 @@ fun CalcScreen(
     val bestBedtime = bedtimes(wake, calc).firstOrNull { it.first > now }?.first
     var sleepMinutes by remember(wake, realSleep) { mutableIntStateOf(minutesOf(realSleep ?: bestBedtime ?: now)) }
     val sleep = start + sleepMinutes * MINUTE
-    // now = wake: show the alarm as it will be after the check
-    val ring = ringTime(wake, sleep, now = wake, calc)
+    val ring = ringTime(wake, sleep, calc)
     val format = { time: Long -> DateFormat.getTimeFormat(context).format(time) }
 
     fun save() {

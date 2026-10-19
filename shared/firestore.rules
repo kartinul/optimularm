@@ -1,0 +1,34 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function isMember(pairId) {
+      let pairing = get(/databases/$(database)/documents/pairings/$(pairId)).data;
+      return request.auth != null
+        && request.auth.uid in [pairing.macDeviceId, pairing.get('androidDeviceId', '')];
+    }
+
+    match /pairings/{pairId} {
+      allow create: if request.auth != null
+        && request.resource.data.macDeviceId == request.auth.uid
+        && request.resource.data.status == 'pending';
+      allow read: if isMember(pairId);
+      // a phone may join a pending pairing, but only as itself
+      allow update: if request.resource.data.macDeviceId == resource.data.macDeviceId
+        && (isMember(pairId)
+          || (resource.data.status == 'pending' && request.resource.data.androidDeviceId == request.auth.uid));
+
+      match /sleepEvents/{eventId} {
+        allow read, write: if isMember(pairId);
+      }
+    }
+
+    match /settings/{pairId} {
+      allow read, write: if isMember(pairId);
+    }
+
+    match /ratings/{ratingId} {
+      allow create: if isMember(request.resource.data.pairId);
+      allow read: if isMember(resource.data.pairId);
+    }
+  }
+}

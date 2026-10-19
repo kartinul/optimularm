@@ -1,0 +1,10 @@
+{
+  "firestore": {
+    "rules": "shared/firestore.rules"
+  },
+  "auth": {
+    "providers": {
+      "anonymous": true
+    }
+  }
+}

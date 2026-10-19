@@ -60,12 +60,14 @@ xcodebuild -project macos/optimularm.xcodeproj -scheme optimularm build
 - Ratings (1–5) always sync to Firestore.
 - Namespaces: Android `io.github.kartinul`, macOS bundle `io.github.kartinul.optimularm`, logger subsystem `com.kartinul.optimularm`.
 
-## Firestore schema (target)
+## Firestore schema
+
+Also in `shared/firestore-schema.md`; rules in `shared/firestore.rules`.
 
 ```jsonc
 // pairings/{pairId}
 { "pairId", "macDeviceId": "<anon uid>", "androidDeviceId": "<anon uid>",
-  "androidFcmToken", "status": "pending|paired", "createdAt", "pairedAt" }
+  "status": "pending|paired", "createdAt", "pairedAt" }
 
 // settings/{pairId}                        — both read and write, live
 { "wakeTime": "08:00", "alarmOn": true, "sleepCutoff": "12:00", "lastUpdated" }

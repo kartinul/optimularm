@@ -34,21 +34,21 @@ The schema is in `CLAUDE.md`.
 
 ## macOS — build
 
-- [ ] Settings window:
-  - [ ] live listener on `settings/{pairId}` (same doc the phone's Clock dial writes; last write wins)
-  - [ ] wake time, bedtime/sleep cutoff and alarm on/off pickers → `settings/{pairId}` (`"HH:mm"` strings, `alarmOn` bool, merge writes)
-  - [ ] launch at login (`SMAppService.mainApp`)
-  - [ ] pairing status and a Re-pair button
-  - [ ] switch to `.regular` on open and back to `.accessory` on close
-- [ ] Anonymous Auth sign-in on launch
-- [ ] Pairing:
-  - [ ] generate a `pairId`
-  - [ ] write `pairings/{pairId}` with `status: "pending"` and `macDeviceId`
-  - [ ] show a QR code (`CIFilter.qrCodeGenerator()`)
-  - [ ] listen for `status: "paired"`
-  - [ ] persist `pairId` in `UserDefaults`
-- [ ] Split files: `AppDelegate.swift`, `AppState.swift`, `SleepWatcher.swift`, `Data/*Repository.swift`, `UI/MenuBarView.swift`, `UI/SettingsView.swift`, `UI/PairingView.swift`
-- [ ] Menu dropdown: wake time, alarm on/off and the last sleep time (from the `settings` listener)
+- [x] Settings window:
+  - [x] live listener on `settings/{pairId}` (same doc the phone's Clock dial writes; last write wins)
+  - [x] wake time, bedtime/sleep cutoff and alarm on/off pickers → `settings/{pairId}` (`"HH:mm"` strings, `alarmOn` bool, merge writes)
+  - [x] launch at login (`SMAppService.mainApp`)
+  - [x] pairing status and a Re-pair button
+  - [x] switch to `.regular` on open and back to `.accessory` on close
+- [x] Anonymous Auth sign-in on launch
+- [x] Pairing:
+  - [x] generate a `pairId`
+  - [x] write `pairings/{pairId}` with `status: "pending"` and `macDeviceId`
+  - [x] show a QR code (`CIFilter.qrCodeGenerator()`)
+  - [x] listen for `status: "paired"`
+  - [x] persist `pairId` in `UserDefaults`
+- [x] Split files: `AppDelegate.swift`, `AppState.swift`, `SleepWatcher.swift`, `Data/*Repository.swift`, `UI/MenuBarView.swift`, `UI/SettingsView.swift`, `UI/PairingView.swift`
+- [x] Menu dropdown: wake time, alarm on/off and the last sleep time (from the `settings` listener)
 
 ## Android
 
@@ -63,37 +63,37 @@ The schema is in `CLAUDE.md`.
 - [x] Reschedule tomorrow's alarm after it rings (`AlarmReceiver`), not only when the app is opened
 - [x] `CheckReceiver` (the check): read the latest sleep event → `CycleCalculator` (ignore events before `sleepCutoff`) → move the alarm with `scheduleAlarm`
 - [x] Late-sleep path: a listener on `sleepEvents` that handles events arriving after wake − 90
-- [ ] Gradle:
+- [x] Gradle:
   - [x] add WorkManager, Google code scanner (no CameraX, no CAMERA permission) (tabs and icons need no extra deps)
   - [x] remove Crashlytics
   - [x] remove Analytics if not wanted
 - [x] `.gitignore`: `android/build/` and `android/.gradle/` show up as untracked
-- [ ] Manifest:
+- [x] Manifest:
   - [x] remove the duplicate `POST_NOTIFICATIONS`
-  - [ ] register `CheckReceiver`, `BootReceiver`
-- [ ] `OptimularmApplication`: Firebase init and Anonymous Auth
-- [ ] Onboarding checklist with deep links: notifications, exact alarms, battery unrestricted, camera
-- [ ] `PairingScreen`:
-  - [ ] scan the QR
-  - [ ] write `androidDeviceId`, the FCM token and `status: "paired"`
-  - [ ] store `pairId` in DataStore
+  - [x] register `CheckReceiver`, `BootReceiver`
+- [x] `OptimularmApplication`: Firebase init and Anonymous Auth
+- [x] Onboarding checklist with deep links: notifications, full-screen, exact alarms, battery unrestricted (Settings tab → Permissions)
+- [x] `PairingScreen`:
+  - [x] scan the QR
+  - [x] write `androidDeviceId` and `status: "paired"` (no FCM)
+  - [x] store `pairId` (SharedPreferences, no DataStore dep)
 - [x] Runs on the S23; phone writes reach Firestore (checked `settings/gaga` and `pairings/gaga`)
 - [x] UI: Clock tab (24h dial: bedtime handle = sleep cutoff, alarm handle = wake time; on/off; real ring time) and Settings tab (pair button), live-synced with `settings/{pairId}`
 - [x] Ring screen: centered Wake up + Stop
-- [ ] Clock tab: last sleep time, permission health
-- [ ] Clock tab: the "in 14 hours" text only refreshes on settings change; tick it every minute
-- [ ] Settings tab: Unpair button (today Pair disables itself and you can't undo it). Unpair = set `status: "pending"` / clear the pair; once real pairing exists, also forget the stored `pairId`
+- [x] Clock tab: last sleep time, permission health
+- [x] Clock tab: the "in 14 hours" text only refreshes on settings change; tick it every minute
+- [x] Settings tab: Unpair button (today Pair disables itself and you can't undo it). Unpair = set `status: "pending"` / clear the pair; once real pairing exists, also forget the stored `pairId`
 - [ ] Default bedtime 12:00 draws a 20 h arc on first launch; consider 22:00
 - [x] `BootReceiver`: reschedule the check from `settings`
 - [x] WorkManager 15-minute fallback poll
-- [ ] Own alarm, finish it: snooze, alarm volume/vibration, reschedule after reboot, Samsung battery "sleeping apps" exemption
-- [ ] `RatingScreen`: 1–5 rating after the alarm (notification → screen) → `ratings`
+- [x] Own alarm, finish it: snooze, alarm volume/vibration, reschedule after reboot, Samsung battery "sleeping apps" exemption
+- [x] Rating: 1–5 on the ring screen after Stop → `ratings`
 
 ## Firebase
 
-- [ ] Replace the open rules with `pairId`-scoped rules: only the pair's two uids can read/write (both may write `settings`)
-- [ ] Index on `pairings/{pairId}/sleepEvents` by `sleepTime` desc (a single-field index, created automatically)
-- [ ] Create `/shared/firestore-schema.md` and `/shared/firestore.rules`
+- [x] Replace the open rules with `pairId`-scoped rules: only the pair's two uids can read/write (both may write `settings`)
+- [x] Index on `pairings/{pairId}/sleepEvents` by `sleepTime` desc (a single-field index, created automatically)
+- [x] Create `/shared/firestore-schema.md` and `/shared/firestore.rules`
 
 ## Later
 

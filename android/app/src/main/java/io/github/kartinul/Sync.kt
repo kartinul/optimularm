@@ -12,6 +12,7 @@ import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
 import androidx.work.WorkerParameters
 import io.github.kartinul.data.fetchLatestSleep
+import io.github.kartinul.data.loadCalcPrefs
 import io.github.kartinul.data.fetchWakeSettings
 import io.github.kartinul.data.pairId
 import kotlinx.coroutines.CoroutineScope
@@ -39,9 +40,10 @@ suspend fun sync(context: Context) {
     val from = Calendar.getInstance().apply { timeInMillis = maxOf(now, done) }
     val wake = nextOccurrence(settings.wakeTime, from).timeInMillis
     val sleep = fetchLatestSleep(id, after = cutoffBefore(wake, settings.sleepCutoff))
-    val ring = ringTime(wake, sleep?.sleepTime, now)
+    val calc = loadCalcPrefs(context)
+    val ring = ringTime(wake, sleep?.sleepTime, now, calc)
     scheduleAlarm(context, ring, wake, sleep?.id)
-    if (now < checkTime(wake)) scheduleCheck(context, checkTime(wake)) else cancelCheck(context)
+    if (now < checkTime(wake, calc)) scheduleCheck(context, checkTime(wake, calc)) else cancelCheck(context)
     Log.i(TAG, "sync: wake=${Date(wake)} sleep=${sleep?.sleepTime?.let(::Date)} ring=${Date(ring)}")
 }
 

@@ -37,6 +37,7 @@ import androidx.core.content.ContextCompat
 import io.github.kartinul.data.latestSleepFlow
 import io.github.kartinul.data.pairId
 import io.github.kartinul.data.wakeSettingsFlow
+import io.github.kartinul.ui.CalcScreen
 import io.github.kartinul.ui.ClockScreen
 import io.github.kartinul.ui.SettingsScreen
 import io.github.kartinul.ui.checkPermissions
@@ -54,7 +55,11 @@ class MainActivity : ComponentActivity() {
     }
 }
 
-private val tabs = listOf("Clock" to R.drawable.ic_alarm, "Settings" to R.drawable.ic_settings)
+private val tabs = listOf(
+    "Clock" to R.drawable.ic_alarm,
+    "Calculations" to R.drawable.ic_bedtime,
+    "Settings" to R.drawable.ic_settings,
+)
 
 @Composable
 fun App() {
@@ -64,6 +69,7 @@ fun App() {
     val settings by remember(pairedId) { pairedId?.let(::wakeSettingsFlow) ?: flowOf(null) }.collectAsState(null)
     val latestSleep by remember(pairedId) { pairedId?.let(::latestSleepFlow) ?: flowOf(null) }.collectAsState(null)
     var ringsAt by remember { mutableStateOf(ringAt(context)) }
+    var calcVersion by remember { mutableIntStateOf(0) }
     val snoozed by remember { snoozedUntilFlow(context) }.collectAsState(null)
     var permissions by remember { mutableStateOf(checkPermissions(context)) }
     LifecycleResumeEffect(Unit) {
@@ -80,8 +86,8 @@ fun App() {
         if (needsPermission) notificationPermission.launch(Manifest.permission.POST_NOTIFICATIONS)
     }
 
-    // any settings change or new sleep event (incl. late sleep) from either device re-runs sync
-    LaunchedEffect(pairedId, settings, latestSleep) {
+    // any settings change, new sleep event (incl. late sleep) or calc tweak re-runs sync
+    LaunchedEffect(pairedId, settings, latestSleep, calcVersion) {
         try {
             sync(context)
         } catch (e: FirebaseException) {
@@ -107,10 +113,12 @@ fun App() {
         val content = Modifier.padding(innerPadding)
         val current = settings
         when {
-            tab == 1 -> SettingsScreen(pairedId, permissions, onPairChanged = { pairedId = pairId }, content)
+            tab == 2 -> SettingsScreen(pairedId, permissions, onPairChanged = { pairedId = pairId }, content)
             pairedId == null -> Box(content.fillMaxSize(), contentAlignment = Alignment.Center) {
                 Text("Pair with your Mac in Settings")
             }
+            current != null && tab == 1 ->
+                CalcScreen(current, latestSleep, onCalcChanged = { calcVersion++ }, content)
             current != null ->
                 ClockScreen(current, ringsAt, permissions.count { !it.granted }, snoozedUntil = snoozed, onCancelSnooze = { cancelSnooze(context) }, content)
         }

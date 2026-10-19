@@ -1,21 +1,30 @@
 package io.github.kartinul
 
+import io.github.kartinul.data.CalcPrefs
 import java.util.Calendar
 
 const val MINUTE = 60_000L
 const val CYCLE = 90 * MINUTE
-private const val FALL_ASLEEP = 10 * MINUTE
-private const val LATE_SLEEP_NAP = 30 * MINUTE
 
-fun checkTime(wake: Long) = wake - CYCLE
+fun checkTime(wake: Long, calc: CalcPrefs = CalcPrefs()) = wake - calc.cycle * MINUTE
 
-/** When to ring for [wake], given the latest counted sleep time. Never later than [wake]. */
-fun ringTime(wake: Long, sleep: Long?, now: Long): Long {
-    if (sleep == null || now < checkTime(wake)) return wake
-    if (sleep >= checkTime(wake)) return minOf(sleep + LATE_SLEEP_NAP, wake)
-    val asleep = sleep + FALL_ASLEEP
-    val cycles = (wake - asleep) / CYCLE
-    return if (cycles >= 1) asleep + cycles * CYCLE else wake
+/** When to ring for [wake]: feelGood after the last cycle end within feelGood of [wake]. Never later than [wake]. */
+fun ringTime(wake: Long, sleep: Long?, now: Long, calc: CalcPrefs = CalcPrefs()): Long {
+    val check = checkTime(wake, calc)
+    if (sleep == null || now < check) return wake
+    if (sleep >= check) return minOf(sleep + calc.lateNap * MINUTE, wake)
+    val asleep = sleep + calc.fallAsleep * MINUTE
+    val cycle = calc.cycle * MINUTE
+    val feelGood = calc.feelGood * MINUTE
+    val cycles = (wake + feelGood - asleep) / cycle
+    // only possible when fallAsleep > feelGood: not even one cycle fits
+    if (cycles < 1) return wake
+    return minOf(wake, asleep + cycles * cycle + feelGood)
+}
+
+/** For 6 down to 3 cycles: the latest bedtime that still rings right at [wake]. */
+fun bedtimes(wake: Long, calc: CalcPrefs = CalcPrefs()): List<Pair<Long, Int>> = (6 downTo 3).map { cycles ->
+    wake + (calc.feelGood - calc.fallAsleep - cycles * calc.cycle) * MINUTE to cycles
 }
 
 /** The last [sleepCutoff] ("HH:mm") before [wake]; earlier sleep events don't count. */

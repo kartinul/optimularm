@@ -158,13 +158,23 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         NSApp.setActivationPolicy(.accessory)
     }
 
+    /** The alarm glyph is top-heavy (bells), so it is drawn 1 pt low to sit centered with other menu bar icons. */
+    private func menuBarIcon(_ symbol: String) -> NSImage? {
+        guard let glyph = NSImage(systemSymbolName: symbol, accessibilityDescription: "optimularm")?
+            .withSymbolConfiguration(.init(pointSize: 15, weight: .medium)) else { return nil }
+        let image = NSImage(size: NSSize(width: glyph.size.width, height: glyph.size.height + 2), flipped: false) { _ in
+            glyph.draw(in: NSRect(origin: .zero, size: glyph.size))
+            return true
+        }
+        image.isTemplate = true
+        return image
+    }
+
     /** Re-runs whenever the state it reads changes (Observation framework). */
     private func updateIcon() {
         withObservationTracking {
             let on = state.paired && state.settings.alarmOn
-            let image = NSImage(systemSymbolName: on ? "alarm.fill" : "alarm", accessibilityDescription: "optimularm")
-            image?.isTemplate = true
-            statusItem.button?.image = image
+            statusItem.button?.image = menuBarIcon(on ? "alarm.fill" : "alarm")
             statusItem.button?.appearsDisabled = !on
         } onChange: {
             DispatchQueue.main.async { self.updateIcon() }

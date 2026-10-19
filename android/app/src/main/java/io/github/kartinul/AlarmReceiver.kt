@@ -72,6 +72,7 @@ fun snooze(context: Context) {
     alarmPrefs(context).edit { putLong(SNOOZED_UNTIL, millis) }
     context.getSystemService(AlarmManager::class.java)
         .setAlarmClock(AlarmManager.AlarmClockInfo(millis, showIntent), intent)
+    showSnoozeNotification(context, millis)
 }
 
 /** When a pending snooze will ring, or null. */
@@ -93,6 +94,7 @@ fun cancelSnooze(context: Context) {
     context.getSystemService(AlarmManager::class.java).cancel(snoozeIntent(context))
     setSnoozesUsed(context, 0)
     alarmPrefs(context).edit { remove(SNOOZED_UNTIL) }
+    hideSnoozeNotification(context)
 }
 
 fun cancelAlarm(context: Context) {
@@ -102,7 +104,9 @@ fun cancelAlarm(context: Context) {
 
 class AlarmReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
+        if (intent.action == ACTION_CANCEL_SNOOZE) return cancelSnooze(context)
         alarmPrefs(context).edit { remove(SNOOZED_UNTIL) }
+        hideSnoozeNotification(context)
         if (!intent.getBooleanExtra(SNOOZE, false)) {
             val prefs = alarmPrefs(context)
             prefs.edit {

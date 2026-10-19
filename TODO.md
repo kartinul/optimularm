@@ -53,11 +53,11 @@ The schema is in `CLAUDE.md`.
 ## Android
 
 - [x] Own alarm works on the S23: `setAlarmClock` → `AlarmReceiver` → full-screen notification → `RingActivity` (sound + Stop), and it cancels silently. Samsung Clock was dropped because it can't remove alarms silently.
-- [ ] `CycleCalculator`: a pure function plus unit tests
-  - [ ] normal case (pick the last boundary ≤ wake time)
-  - [ ] no full cycle fits → wake time
-  - [ ] late sleep → `sleepTime + 30min`
-  - [ ] sleep before midnight, wake time next day
+- [x] `CycleCalculator`: a pure function plus unit tests
+  - [x] normal case (pick the last boundary ≤ wake time)
+  - [x] no full cycle fits → wake time
+  - [x] late sleep → `sleepTime + 30min`
+  - [x] sleep before midnight, wake time next day
 - [x] Listen to `settings/{pairId}` (`data/WakeSettings.kt`) and set the default alarm on change (`MainActivity`, only while the app is open)
 - [ ] Schedule the check at wake − 90 on every settings change
 - [ ] Reschedule tomorrow's alarm after it rings (`AlarmReceiver`), not only when the app is opened

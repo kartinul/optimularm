@@ -37,8 +37,9 @@ suspend fun joinPairing(qr: String): Boolean {
     return true
 }
 
-suspend fun unpair() {
+/** Local state clears at once; Firestore queues the remote reset, so this works offline too. */
+fun unpair() {
     val id = pairId ?: return
     pairId = null
-    pairingDoc(id).update(mapOf("status" to "pending", "androidDeviceId" to FieldValue.delete())).await()
+    pairingDoc(id).update(mapOf("status" to "pending", "androidDeviceId" to FieldValue.delete()))
 }

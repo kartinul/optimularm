@@ -16,7 +16,9 @@ jobs:
         with:
           distribution: temurin
           java-version: 17
-      - run: echo '${{ secrets.GOOGLE_SERVICES_JSON }}' > android/app/google-services.json
+      - run: printf '%s' "$GOOGLE_SERVICES_JSON" > android/app/google-services.json
+        env:
+          GOOGLE_SERVICES_JSON: ${{ secrets.GOOGLE_SERVICES_JSON }}
       - run: ./gradlew assembleDebug
         working-directory: android
       - run: mv android/app/build/outputs/apk/debug/app-debug.apk optimularm-${{ github.ref_name }}.apk

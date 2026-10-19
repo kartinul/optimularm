@@ -29,15 +29,13 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.Alignment
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.fillMaxSize
 import kotlinx.coroutines.flow.flowOf
 import androidx.core.content.ContextCompat
 import io.github.kartinul.data.latestSleepFlow
 import io.github.kartinul.data.pairId
 import io.github.kartinul.data.wakeSettingsFlow
 import io.github.kartinul.ui.CalcScreen
+import io.github.kartinul.ui.PairScreen
 import io.github.kartinul.ui.ClockScreen
 import io.github.kartinul.ui.SettingsScreen
 import io.github.kartinul.ui.checkPermissions
@@ -98,7 +96,7 @@ fun App() {
 
     Scaffold(
         bottomBar = {
-            NavigationBar {
+            if (pairedId != null) NavigationBar {
                 tabs.forEachIndexed { index, (label, icon) ->
                     NavigationBarItem(
                         selected = tab == index,
@@ -113,10 +111,8 @@ fun App() {
         val content = Modifier.padding(innerPadding)
         val current = settings
         when {
+            pairedId == null -> PairScreen(onPairChanged = { pairedId = pairId }, content)
             tab == 2 -> SettingsScreen(pairedId, permissions, onPairChanged = { pairedId = pairId }, content)
-            pairedId == null -> Box(content.fillMaxSize(), contentAlignment = Alignment.Center) {
-                Text("Pair with your Mac in Settings")
-            }
             current != null && tab == 1 ->
                 CalcScreen(current, latestSleep, onCalcChanged = { calcVersion++ }, content)
             current != null ->

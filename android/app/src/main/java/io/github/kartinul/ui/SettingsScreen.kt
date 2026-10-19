@@ -1,7 +1,6 @@
 package io.github.kartinul.ui
 
 import android.os.Build
-import android.widget.Toast
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.rememberScrollState
@@ -17,8 +16,6 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
-import com.google.mlkit.vision.codescanner.GmsBarcodeScanning
-import io.github.kartinul.data.joinPairing
 import io.github.kartinul.data.unpair
 import io.github.kartinul.ui.theme.saveWallpaperColors
 import io.github.kartinul.ui.theme.wallpaperColors
@@ -34,16 +31,8 @@ fun SettingsScreen(
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
 
-    fun pair() = GmsBarcodeScanning.getClient(context).startScan().addOnSuccessListener { code ->
-        scope.launch {
-            val joined = runCatching { joinPairing(code.rawValue.orEmpty()) }.getOrDefault(false)
-            if (!joined) Toast.makeText(context, "Not an optimularm code", Toast.LENGTH_SHORT).show()
-            onPairChanged()
-        }
-    }
-
-    fun unpairNow() = scope.launch {
-        runCatching { unpair() }
+    fun unpairNow() {
+        unpair()
         onPairChanged()
     }
 
@@ -66,7 +55,7 @@ fun SettingsScreen(
             supportingContent = { Text(if (pairId != null) "Paired" else "Not paired") },
             trailingContent = {
                 if (pairId != null) FilledTonalButton(onClick = ::unpairNow) { Text("Unpair") }
-                else FilledTonalButton(onClick = ::pair) { Text("Pair") }
+                else FilledTonalButton(onClick = { scanAndPair(context, scope, onPairChanged) }) { Text("Pair") }
             },
         )
         SectionTitle("Permissions")

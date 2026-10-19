@@ -59,10 +59,10 @@ The schema is in `CLAUDE.md`.
   - [x] late sleep → `sleepTime + 30min`
   - [x] sleep before midnight, wake time next day
 - [x] Listen to `settings/{pairId}` (`data/WakeSettings.kt`) and set the default alarm on change (`MainActivity`, only while the app is open)
-- [ ] Schedule the check at wake − 90 on every settings change
-- [ ] Reschedule tomorrow's alarm after it rings (`AlarmReceiver`), not only when the app is opened
-- [ ] `CheckReceiver` (the check): read the latest sleep event → `CycleCalculator` (ignore events before `sleepCutoff`) → move the alarm with `scheduleAlarm`
-- [ ] Late-sleep path: a listener on `sleepEvents` that handles events arriving after wake − 90
+- [x] Schedule the check at wake − 90 on every settings change
+- [x] Reschedule tomorrow's alarm after it rings (`AlarmReceiver`), not only when the app is opened
+- [x] `CheckReceiver` (the check): read the latest sleep event → `CycleCalculator` (ignore events before `sleepCutoff`) → move the alarm with `scheduleAlarm`
+- [x] Late-sleep path: a listener on `sleepEvents` that handles events arriving after wake − 90
 - [ ] Gradle:
   - [x] add WorkManager, Google code scanner (no CameraX, no CAMERA permission) (tabs and icons need no extra deps)
   - [x] remove Crashlytics
@@ -84,8 +84,8 @@ The schema is in `CLAUDE.md`.
 - [ ] Clock tab: the "in 14 hours" text only refreshes on settings change; tick it every minute
 - [ ] Settings tab: Unpair button (today Pair disables itself and you can't undo it). Unpair = set `status: "pending"` / clear the pair; once real pairing exists, also forget the stored `pairId`
 - [ ] Default bedtime 12:00 draws a 20 h arc on first launch; consider 22:00
-- [ ] `BootReceiver`: reschedule the check from `settings`
-- [ ] WorkManager 15-minute fallback poll
+- [x] `BootReceiver`: reschedule the check from `settings`
+- [x] WorkManager 15-minute fallback poll
 - [ ] Own alarm, finish it: snooze, alarm volume/vibration, reschedule after reboot, Samsung battery "sleeping apps" exemption
 - [ ] `RatingScreen`: 1–5 rating after the alarm (notification → screen) → `ratings`
 

@@ -4,6 +4,7 @@ import android.Manifest
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
@@ -30,6 +31,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.core.content.ContextCompat
+import io.github.kartinul.data.latestSleepFlow
 import io.github.kartinul.data.pairStatusFlow
 import io.github.kartinul.data.wakeSettingsFlow
 import io.github.kartinul.ui.ClockScreen
@@ -40,6 +42,7 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+        startSyncWorker(this)
         setContent {
             OptimularmTheme { App() }
         }
@@ -55,7 +58,8 @@ fun App() {
     var tab by rememberSaveable { mutableIntStateOf(0) }
     val settings by remember { wakeSettingsFlow() }.collectAsState(initial = null)
     val pairStatus by remember { pairStatusFlow() }.collectAsState(initial = null)
-    var ringTime by remember { mutableStateOf(ringAt(context)) }
+    val latestSleep by remember { latestSleepFlow() }.collectAsState(initial = null)
+    var ringsAt by remember { mutableStateOf(ringAt(context)) }
 
     val notificationPermission =
         rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) {}
@@ -66,11 +70,11 @@ fun App() {
         if (needsPermission) notificationPermission.launch(Manifest.permission.POST_NOTIFICATIONS)
     }
 
-    // every wake time / switch change from either device lands here and (re)sets the phone's alarm
-    LaunchedEffect(settings) {
-        val current = settings ?: return@LaunchedEffect
-        if (current.alarmOn) scheduleAlarm(context, current.wakeTime) else cancelAlarm(context)
-        ringTime = ringAt(context)
+    // any settings change or new sleep event (incl. late sleep) from either device re-runs sync
+    LaunchedEffect(settings, latestSleep) {
+        if (settings == null) return@LaunchedEffect
+        runCatching { sync(context) }.onFailure { Log.e(TAG, "sync failed", it) }
+        ringsAt = ringAt(context)
     }
 
     Scaffold(
@@ -90,7 +94,7 @@ fun App() {
     ) { innerPadding ->
         val current = settings ?: return@Scaffold
         val content = Modifier.padding(innerPadding)
-        if (tab == 0) ClockScreen(current, ringTime, content)
+        if (tab == 0) ClockScreen(current, ringsAt, content)
         else SettingsScreen(pairStatus, content)
     }
 }

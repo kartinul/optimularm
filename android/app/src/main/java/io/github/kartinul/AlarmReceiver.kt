@@ -17,6 +17,8 @@ import java.util.Calendar
 const val ALARM_NOTIFICATION_ID = 1
 private const val ALARM_CHANNEL = "alarm"
 private const val RING_AT = "ringAt"
+private const val WAKE = "wake"
+private const val DONE_WAKE = "doneWake"
 
 fun ownAlarmIntent(context: Context): PendingIntent = PendingIntent.getBroadcast(
     context, 0, Intent(context, AlarmReceiver::class.java), PendingIntent.FLAG_IMMUTABLE
@@ -25,6 +27,9 @@ fun ownAlarmIntent(context: Context): PendingIntent = PendingIntent.getBroadcast
 private fun alarmPrefs(context: Context) = context.getSharedPreferences("alarm", Context.MODE_PRIVATE)
 
 fun ringAt(context: Context): Long? = alarmPrefs(context).getLong(RING_AT, 0).takeIf { it > 0 }
+
+/** The wake time whose alarm already rang, so sync() moves on to the next day. */
+fun doneWake(context: Context): Long = alarmPrefs(context).getLong(DONE_WAKE, 0)
 
 fun nextOccurrence(time: String, now: Calendar = Calendar.getInstance()): Calendar {
     val (hour, minute) = time.split(":").map(String::toInt)
@@ -37,14 +42,13 @@ fun nextOccurrence(time: String, now: Calendar = Calendar.getInstance()): Calend
     }
 }
 
-fun scheduleAlarm(context: Context, wakeTime: String) {
-    val millis = nextOccurrence(wakeTime).timeInMillis
+fun scheduleAlarm(context: Context, millis: Long, wake: Long) {
     val showIntent = PendingIntent.getActivity(
         context, 0, Intent(context, MainActivity::class.java), PendingIntent.FLAG_IMMUTABLE
     )
     context.getSystemService(AlarmManager::class.java)
         .setAlarmClock(AlarmManager.AlarmClockInfo(millis, showIntent), ownAlarmIntent(context))
-    alarmPrefs(context).edit { putLong(RING_AT, millis) }
+    alarmPrefs(context).edit { putLong(RING_AT, millis).putLong(WAKE, wake) }
 }
 
 fun cancelAlarm(context: Context) {
@@ -54,6 +58,10 @@ fun cancelAlarm(context: Context) {
 
 class AlarmReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
+        val prefs = alarmPrefs(context)
+        prefs.edit { putLong(DONE_WAKE, prefs.getLong(WAKE, 0)).remove(RING_AT) }
+        syncAsync(context)
+
         val canNotify = ContextCompat.checkSelfPermission(
             context, Manifest.permission.POST_NOTIFICATIONS
         ) == PackageManager.PERMISSION_GRANTED

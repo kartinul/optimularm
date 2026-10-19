@@ -136,12 +136,9 @@ fun SleepDial(
                             null -> false
                         }
                         if (moved) haptics.performHapticFeedback(
-                            // heavy on whole hours, firm on quarters, light on the 5-minute steps between
-                            when {
-                                minutes % 60 == 0 -> HapticFeedbackType.GestureThresholdActivate
-                                minutes % QUARTER == 0 -> HapticFeedbackType.SegmentTick
-                                else -> HapticFeedbackType.SegmentFrequentTick
-                            }
+                            // a strong click on every quarter, a light tick on the 5-minute steps between
+                            if (minutes % QUARTER == 0) HapticFeedbackType.GestureThresholdActivate
+                            else HapticFeedbackType.SegmentFrequentTick
                         )
                     }
                 }

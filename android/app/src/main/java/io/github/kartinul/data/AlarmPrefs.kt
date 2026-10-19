@@ -14,7 +14,7 @@ data class AlarmPrefs(
 )
 
 val SNOOZE_LENGTHS = listOf(5, 10, 15)
-val SNOOZE_LIMITS = listOf(1, 2, 3)
+val SNOOZE_LIMITS = listOf(0, 1, 2, 3)
 
 private fun prefs(context: Context) = context.getSharedPreferences("ring", Context.MODE_PRIVATE)
 

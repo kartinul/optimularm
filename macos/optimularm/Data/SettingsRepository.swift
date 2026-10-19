@@ -41,3 +41,14 @@ func createDefaultSettings(_ pairId: String) async throws {
         "lastUpdated": FieldValue.serverTimestamp(),
     ])
 }
+
+private let timeFormat: DateFormatter = {
+    let formatter = DateFormatter()
+    formatter.locale = Locale(identifier: "en_US_POSIX")
+    formatter.dateFormat = "HH:mm"
+    return formatter
+}()
+
+/** "08:00" ⇄ Date, for pickers and display. */
+func timeDate(_ time: String) -> Date { timeFormat.date(from: time) ?? .now }
+func timeString(_ date: Date) -> String { timeFormat.string(from: date) }

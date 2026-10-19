@@ -9,11 +9,6 @@ import os
 
 @Observable
 final class AppState {
-    // Symbol name for the menu bar icon; update this from anywhere to reflect in the menu
-    var menuBarSystemImage: String = "timer.circle.fill"
-    // Optional title if you want to change the label text too
-    var menuBarTitle: String = "optimularm"
-
     var pairId: String? = UserDefaults.standard.string(forKey: "pairId") {
         didSet {
             UserDefaults.standard.set(pairId, forKey: "pairId")
@@ -38,6 +33,11 @@ final class AppState {
             listenSettings(pairId) { [weak self] in self?.settings = $0 },
             listenLatestSleep(pairId) { [weak self] in self?.lastSleep = $0 },
         ]
+    }
+
+    func toggleAlarm() {
+        guard let pairId, paired else { return }
+        saveSettings(pairId, ["alarmOn": !settings.alarmOn])
     }
 
     func repair() {

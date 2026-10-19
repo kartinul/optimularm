@@ -25,6 +25,8 @@ optimularm wakes you at the optimal point in your sleep cycle before a set wake-
 
 ## Commands
 
+From the repo root: `make install` (Release Mac app → /Applications + phone), `make test`, `make rules`, `make logs`.
+
 Android (run from `android/`):
 ```sh
 ./gradlew assembleDebug
@@ -83,6 +85,6 @@ The Swift model is `SleepEvent` in `macos/optimularm/SleepEvent.swift`. If you c
 
 ## Current macOS code
 
-`AppDelegate` (in `optimularmApp.swift`) configures Firebase and observes display sleep, calling `writeSleepEvent()`. It still has the old wake observer and `markLatestEventInterrupted()`, and `SleepEvent` still carries the old fields; `TODO.md` lists their removal. `AppState` (`@Observable`) holds the menu-bar icon and title. Log through the shared `logger` in `Logging.swift`. Firestore rules are currently wide open.
+`AppDelegate` configures Firebase, signs in anonymously and owns the `NSStatusItem`: left click opens the `MenuBarView` popover, right click toggles the alarm. It also owns the settings window. `AppState` (`@Observable`) holds the pairing, settings and last sleep from live listeners. `SleepWatcher` writes a sleep event on display sleep. Firestore access lives in `Data/`. Log through the shared `logger` in `Logging.swift`. The app signs with the personal team because Firebase Auth needs a keychain access group.
 
 The Firebase config files are committed: `android/app/google-services.json` and `macos/optimularm/GoogleService-Info.plist`.

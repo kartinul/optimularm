@@ -11,17 +11,8 @@ import SwiftUI
 struct optimularmApp: App {
     @NSApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
 
+    // the status item, popover and settings window live in AppDelegate; SwiftUI needs at least one scene
     var body: some Scene {
-        MenuBarExtra {
-            MenuBarView()
-                .environment(appDelegate.state)
-        } label: {
-            Label(appDelegate.state.menuBarTitle, systemImage: appDelegate.state.menuBarSystemImage)
-        }
-
-        Settings {
-            SettingsView()
-                .environment(appDelegate.state)
-        }
+        Settings { EmptyView() }
     }
 }

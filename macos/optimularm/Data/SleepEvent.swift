@@ -17,9 +17,9 @@ private func sleepEvents(_ pairId: String) -> CollectionReference {
     Firestore.firestore().collection("pairings").document(pairId).collection("sleepEvents")
 }
 
-func writeSleepEvent(pairId: String, at sleepTime: Date = Date()) {
+func writeSleepEvent(pairId: String) {
     do {
-        try sleepEvents(pairId).addDocument(from: SleepEvent(sleepTime: sleepTime))
+        try sleepEvents(pairId).addDocument(from: SleepEvent(sleepTime: Date()))
         logger.info("Sleep event written")
     } catch {
         logger.error("Failed to write: \(error.localizedDescription)")

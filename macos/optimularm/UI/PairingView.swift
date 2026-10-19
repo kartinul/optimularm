@@ -14,7 +14,8 @@ struct PairingView: View {
             Image(nsImage: qrImage("optimularm:\(pairId)"))
                 .interpolation(.none)
                 .resizable()
-                .frame(width: 200, height: 200)
+                .frame(width: 180, height: 180)
+                .clipShape(RoundedRectangle(cornerRadius: 8))
             Text("Scan with the optimularm app on your phone")
                 .foregroundStyle(.secondary)
         }

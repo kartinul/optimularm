@@ -18,8 +18,8 @@ The user is learning Swift and Kotlin and wrote the Mac code by hand. The goal i
 
 optimularm wakes you at the optimal point in your sleep cycle before a set wake-up time. Two apps share one Firebase project:
 
-- `macos/`: a SwiftUI menu-bar app that detects display sleep and writes a `sleepEvents` doc to Firestore. It is also the only place `wakeByCeiling` is set.
-- `android/`: a Jetpack Compose app for the user's Samsung phone. It listens for sleep events, calculates the wake time and sets a real alarm in Samsung Clock. It is still the template scaffold.
+- `macos/`: a SwiftUI menu-bar app that detects display sleep and writes a sleep event to Firestore. It is also the only place the wake time is set.
+- `android/`: a Jetpack Compose app for the user's Samsung phone. It listens for the wake time and sleep events, and rings its own alarm. It is still a tester screen.
 
 `TODO.md` lists the current state and the plan.
 
@@ -42,17 +42,20 @@ xcodebuild -project macos/optimularm.xcodeproj -scheme optimularm build
 ## Locked decisions
 
 - No Cloud Functions. Both apps use Firestore directly with live listeners. All calculation happens on Android.
-- Sleep is display-based: `NSWorkspace.screensDidSleepNotification` counts as "user went to sleep", and `screensDidWakeNotification` counts as waking. The Mac writes the event immediately, because timers may not run once the system sleeps.
+- Sleep is display-based: `NSWorkspace.screensDidSleepNotification` counts as "user went to sleep". The Mac writes the event immediately, because timers may not run once the system sleeps.
 - Assume the user falls asleep 10 minutes after the display sleeps.
-- Wake time:
-  - **Adaptive** (sleep after midnight): from `sleepTime + 10min`, step in 90-minute cycles and pick the last boundary at or before `wakeByCeiling`.
-  - **Ceiling** (sleep before midnight): the alarm is exactly `wakeByCeiling`.
-- Samsung Clock has no public cancel API, so Android sets an internal `AlarmManager.setExactAndAllowWhileIdle` alarm at wake − 90 min. When it fires, it re-checks the event:
-  - `active` → `AlarmClock.ACTION_SET_ALARM`, event → `confirmed`, write `alarmState`.
-  - `interrupted` → do nothing.
-- If the Mac wakes before T−90, it marks the latest active event `interrupted` and Android cancels the internal alarm. A new sleep creates a new event.
+- The user sets the **wake time** on either device (`settings/{pairId}.wakeTime`). Both apps read and write `settings` with live listeners; last write wins.
+- Only sleep events after `settings.sleepCutoff` (default `"12:00"`) count for tonight's alarm. On the phone it is the bedtime handle of the Clock dial.
+- As soon as Android receives a wake time, it **must** set its own **default alarm** at that time (`AlarmManager.setAlarmClock` → `AlarmReceiver` → full-screen notification → `RingActivity`), and schedule an internal check with `AlarmManager.setExactAndAllowWhileIdle` at wake − 90 min.
+- A sleep event holds only `sleepTime`. The Mac does nothing when the display wakes; sleeping again just writes a newer event.
+- At the check, Android reads the latest sleep event:
+  - one arrived → from `sleepTime + 10min`, step in 90-minute cycles, pick the last boundary at or before the wake time, and move the alarm there (cancel the default, set the new one).
+  - none arrived → do nothing; the default alarm rings.
+- **Late sleep** (the sleep event arrives after wake − 90): set the alarm at `sleepTime + 30min`.
+- The app rings its own alarm, not Samsung Clock: Samsung Clock can't remove alarms silently (`ACTION_DISMISS_ALARM` opens its UI), while the app can cancel and move its own.
 - Reliability layers: the Firestore listener (primary), a battery-optimization exemption, `SCHEDULE_EXACT_ALARM`, a `BootReceiver`, and a WorkManager 15-minute fallback poll. No foreground service yet.
 - The Mac app is menu-bar only (`.accessory`). It switches to `.regular` only while Settings is open, and uses `SMAppService` for launch at login.
+- No `alarmState` doc: only Android needs the real ring time, and it keeps that locally.
 - Auth is Firebase Anonymous Auth on both devices. The devices are linked by a `pairId` via QR: the Mac shows the code and the phone scans it.
 - Ratings (1–5) always sync to Firestore.
 - Namespaces: Android `io.github.kartinul`, macOS bundle `io.github.kartinul.optimularm`, logger subsystem `com.kartinul.optimularm`.
@@ -64,16 +67,11 @@ xcodebuild -project macos/optimularm.xcodeproj -scheme optimularm build
 { "pairId", "macDeviceId": "<anon uid>", "androidDeviceId": "<anon uid>",
   "androidFcmToken", "status": "pending|paired", "createdAt", "pairedAt" }
 
-// settings/{pairId}        — Mac writes only
-{ "pairId", "wakeByCeiling": "08:00", "lastUpdated" }
+// settings/{pairId}                        — both read and write, live
+{ "wakeTime": "08:00", "alarmOn": true, "sleepCutoff": "12:00", "lastUpdated" }
 
-// sleepEvents/{eventId}    — Mac creates / marks interrupted, Android marks confirmed
-{ "pairId", "sleepTime", "isPostMidnight", "wakeByCeiling": "HH:mm",
-  "status": "active|interrupted|confirmed|completed", "wokeAt", "actualWakeTime" }
-
-// alarmState/{pairId}      — Android writes, Mac displays
-{ "pairId", "sourceEventId", "alarmTime": "06:42", "mode": "adaptive|ceiling",
-  "status": "scheduled|set|cancelled", "lastUpdated" }
+// pairings/{pairId}/sleepEvents/{eventId}  — Mac writes
+{ "sleepTime" }
 
 // ratings/{ratingId}       — Android writes
 { "pairId", "eventId", "rating": 1-5, "timestamp" }
@@ -83,6 +81,6 @@ The Swift model is `SleepEvent` in `macos/optimularm/SleepEvent.swift`. If you c
 
 ## Current macOS code
 
-`AppDelegate` (in `optimularmApp.swift`) configures Firebase and observes sleep and wake, calling `writeSleepEvent()` and `markLatestEventInterrupted()`. `AppState` (`@Observable`) holds the menu-bar icon and title. Log through the shared `logger` in `Logging.swift`. Firestore rules are currently wide open.
+`AppDelegate` (in `optimularmApp.swift`) configures Firebase and observes display sleep, calling `writeSleepEvent()`. It still has the old wake observer and `markLatestEventInterrupted()`, and `SleepEvent` still carries the old fields; `TODO.md` lists their removal. `AppState` (`@Observable`) holds the menu-bar icon and title. Log through the shared `logger` in `Logging.swift`. Firestore rules are currently wide open.
 
 The Firebase config files are committed: `android/app/google-services.json` and `macos/optimularm/GoogleService-Info.plist`.

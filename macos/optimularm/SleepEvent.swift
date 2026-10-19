@@ -12,7 +12,6 @@ struct SleepEvent: Codable {
     @DocumentID var id: String?
     let pairId: String
     let sleepTime: Date
-    let isPostMidnight: Bool
     let wakeByCeiling: String
     var status: String
     var wokeAt: Date? = nil
@@ -23,7 +22,6 @@ func writeSleepEvent() {
     let event = SleepEvent(
         pairId: "gaga",
         sleepTime: Date(),
-        isPostMidnight: true,
         wakeByCeiling: "08:00",
         status: "active"
     )

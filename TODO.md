@@ -95,9 +95,13 @@ The schema is in `CLAUDE.md`.
 - [x] Index on `pairings/{pairId}/sleepEvents` by `sleepTime` desc (a single-field index, created automatically)
 - [x] Create `/shared/firestore-schema.md` and `/shared/firestore.rules`
 
+## Android — alarm
+
+- [x] `RingService` foreground service plays the alarm (ringtone, volume, gradual, vibrate, auto-silence after 10 min)
+- [x] Alarm settings: sound, volume, gradual, vibrate, snooze length, snoozes allowed, test ring
+
 ## Later
 
 - [ ] Notification with a manual "cancel alarm" action
 - [ ] Rating tags and notes
 - [ ] Stats / history view
-- [ ] Foreground service, only if alarms prove unreliable

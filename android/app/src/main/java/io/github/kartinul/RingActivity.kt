@@ -25,7 +25,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.core.app.NotificationManagerCompat
+import io.github.kartinul.data.canSnooze
+import io.github.kartinul.data.loadAlarmPrefs
 import io.github.kartinul.data.saveRating
 import io.github.kartinul.ui.theme.OptimularmTheme
 
@@ -41,7 +42,7 @@ class RingActivity : ComponentActivity() {
                         horizontalAlignment = Alignment.CenterHorizontally,
                     ) {
                         if (stopped) Rating() else Ringing(onStop = {
-                            silence()
+                            stopRinging(this@RingActivity)
                             stopped = true
                         })
                     }
@@ -68,12 +69,11 @@ class RingActivity : ComponentActivity() {
             Text("Stop", style = MaterialTheme.typography.titleLarge)
         }
         Spacer(Modifier.height(16.dp))
-        OutlinedButton(onClick = {
-            silence()
-            snooze(this@RingActivity)
+        if (canSnooze(this)) OutlinedButton(onClick = {
+            snoozeRinging(this)
             finish()
         }) {
-            Text("Snooze 9 min")
+            Text("Snooze ${loadAlarmPrefs(this@RingActivity).snoozeMinutes} min")
         }
     }
 
@@ -94,6 +94,4 @@ class RingActivity : ComponentActivity() {
         Spacer(Modifier.height(16.dp))
         OutlinedButton(onClick = ::finish) { Text("Skip") }
     }
-
-    private fun silence() = NotificationManagerCompat.from(this).cancel(ALARM_NOTIFICATION_ID)
 }

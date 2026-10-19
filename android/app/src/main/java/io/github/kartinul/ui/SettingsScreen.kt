@@ -2,6 +2,8 @@ package io.github.kartinul.ui
 
 import android.widget.Toast
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.ListItem
@@ -40,7 +42,9 @@ fun SettingsScreen(
         onPairChanged()
     }
 
-    Column(modifier) {
+    Column(modifier.verticalScroll(rememberScrollState())) {
+        SectionTitle("Alarm")
+        AlarmSettings()
         SectionTitle("Device")
         ListItem(
             headlineContent = { Text("Mac") },

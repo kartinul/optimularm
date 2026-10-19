@@ -1,26 +1,17 @@
 package io.github.kartinul
 
-import android.Manifest
 import android.app.AlarmManager
-import android.app.Notification
 import android.app.PendingIntent
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
-import android.content.pm.PackageManager
-import android.media.AudioAttributes
-import android.media.RingtoneManager
-import androidx.core.app.NotificationChannelCompat
-import androidx.core.app.NotificationCompat
-import androidx.core.app.NotificationManagerCompat
-import androidx.core.content.ContextCompat
 import androidx.core.content.edit
+import io.github.kartinul.data.loadAlarmPrefs
+import io.github.kartinul.data.setSnoozesUsed
+import io.github.kartinul.data.snoozesUsed
 import java.util.Calendar
 
-const val ALARM_NOTIFICATION_ID = 1
-private const val ALARM_CHANNEL = "ring"
 private const val SNOOZE = "snooze"
-private const val SNOOZE_MINUTES = 9
 private const val RING_AT = "ringAt"
 private const val WAKE = "wake"
 private const val DONE_WAKE = "doneWake"
@@ -69,7 +60,8 @@ fun snooze(context: Context) {
     val showIntent = PendingIntent.getActivity(
         context, 0, Intent(context, MainActivity::class.java), PendingIntent.FLAG_IMMUTABLE
     )
-    val millis = System.currentTimeMillis() + SNOOZE_MINUTES * MINUTE
+    val millis = System.currentTimeMillis() + loadAlarmPrefs(context).snoozeMinutes * MINUTE
+    setSnoozesUsed(context, snoozesUsed(context) + 1)
     context.getSystemService(AlarmManager::class.java)
         .setAlarmClock(AlarmManager.AlarmClockInfo(millis, showIntent), intent)
 }
@@ -88,42 +80,9 @@ class AlarmReceiver : BroadcastReceiver() {
                 putString(RUNG_EVENT_ID, prefs.getString(EVENT_ID, null))
                 remove(RING_AT)
             }
+            setSnoozesUsed(context, 0)
             syncAsync(context)
         }
-
-        val canNotify = ContextCompat.checkSelfPermission(
-            context, Manifest.permission.POST_NOTIFICATIONS
-        ) == PackageManager.PERMISSION_GRANTED
-        if (!canNotify) return
-
-        val manager = NotificationManagerCompat.from(context)
-        // the notification itself rings, so it is loud even when the phone is in use and no full screen shows
-        manager.deleteNotificationChannel("alarm")
-        manager.createNotificationChannel(
-            NotificationChannelCompat.Builder(ALARM_CHANNEL, NotificationManagerCompat.IMPORTANCE_HIGH)
-                .setName("Alarm")
-                .setSound(
-                    RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM),
-                    AudioAttributes.Builder().setUsage(AudioAttributes.USAGE_ALARM).build(),
-                )
-                .setVibrationEnabled(true)
-                .setVibrationPattern(longArrayOf(0, 800, 800))
-                .build()
-        )
-
-        val ringIntent = PendingIntent.getActivity(
-            context, 0, Intent(context, RingActivity::class.java), PendingIntent.FLAG_IMMUTABLE
-        )
-        val notification = NotificationCompat.Builder(context, ALARM_CHANNEL)
-            .setSmallIcon(android.R.drawable.ic_lock_idle_alarm)
-            .setContentTitle("Wake up")
-            .setCategory(NotificationCompat.CATEGORY_ALARM)
-            .setPriority(NotificationCompat.PRIORITY_MAX)
-            .setFullScreenIntent(ringIntent, true)
-            .setContentIntent(ringIntent)
-            .setOngoing(true)
-            .build()
-            .apply { flags = flags or Notification.FLAG_INSISTENT }
-        manager.notify(ALARM_NOTIFICATION_ID, notification)
+        startRinging(context)
     }
 }

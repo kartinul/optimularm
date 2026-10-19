@@ -1,6 +1,13 @@
 package io.github.kartinul.ui
 
 import androidx.compose.foundation.Canvas
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.graphics.Color
+import androidx.compose.material3.Text
+import androidx.compose.material3.Icon
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.aspectRatio
@@ -66,6 +73,7 @@ fun SleepDial(
     onWakeTimeChange: (String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val context = LocalContext.current
     val haptics = LocalHapticFeedback.current
     val textMeasurer = rememberTextMeasurer()
     var bed by remember(bedtime) { mutableIntStateOf(bedtime.toMinutes()) }
@@ -154,5 +162,18 @@ fun SleepDial(
             drawHandle(bed, bedIcon)
             drawHandle(wake, alarmIcon)
         }
+
+        Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(4.dp)) {
+            DialTime(displayTime(context, bed.toTime()), bedIcon, colors.onSurfaceVariant)
+            DialTime(displayTime(context, wake.toTime()), alarmIcon, colors.onSurface)
+        }
+    }
+}
+
+@Composable
+private fun DialTime(time: String, icon: Painter, color: Color) {
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        Icon(icon, contentDescription = null, tint = color, modifier = Modifier.padding(end = 6.dp))
+        Text(time, style = MaterialTheme.typography.headlineMedium, color = color)
     }
 }

@@ -59,7 +59,7 @@ fun ClockScreen(
     val colors = MaterialTheme.colorScheme
 
     Column(
-        modifier.fillMaxSize().padding(horizontal = 24.dp),
+        modifier.fillMaxSize().padding(horizontal = 16.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         Spacer(Modifier.weight(1f))
@@ -80,7 +80,7 @@ fun ClockScreen(
             wakeTime = settings.wakeTime,
             onBedtimeChange = { saveWakeSettings("sleepCutoff" to it) },
             onWakeTimeChange = { saveWakeSettings("wakeTime" to it) },
-            modifier = Modifier.fillMaxWidth(0.85f),
+            modifier = Modifier.fillMaxWidth(),
         )
         Spacer(Modifier.weight(1f))
         BigToggle(settings.alarmOn) { saveWakeSettings("alarmOn" to it) }

@@ -13,6 +13,7 @@ import androidx.work.WorkManager
 import androidx.work.WorkerParameters
 import io.github.kartinul.data.fetchLatestSleep
 import io.github.kartinul.data.fetchWakeSettings
+import io.github.kartinul.data.pairId
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -25,8 +26,9 @@ const val TAG = "optimularm"
 
 /** Reads settings and the latest sleep event, then (re)sets the alarm and the wake − 90 check. */
 suspend fun sync(context: Context) {
-    val settings = fetchWakeSettings()
-    if (!settings.alarmOn) {
+    val id = pairId
+    val settings = id?.let { fetchWakeSettings(it) }
+    if (id == null || settings?.alarmOn != true) {
         cancelAlarm(context)
         cancelCheck(context)
         return
@@ -34,11 +36,11 @@ suspend fun sync(context: Context) {
     val now = System.currentTimeMillis()
     val from = Calendar.getInstance().apply { timeInMillis = maxOf(now, doneWake(context)) }
     val wake = nextOccurrence(settings.wakeTime, from).timeInMillis
-    val sleep = fetchLatestSleep(after = cutoffBefore(wake, settings.sleepCutoff))
-    val ring = ringTime(wake, sleep, now)
-    scheduleAlarm(context, ring, wake)
+    val sleep = fetchLatestSleep(id, after = cutoffBefore(wake, settings.sleepCutoff))
+    val ring = ringTime(wake, sleep?.sleepTime, now)
+    scheduleAlarm(context, ring, wake, sleep?.id)
     if (now < checkTime(wake)) scheduleCheck(context, checkTime(wake)) else cancelCheck(context)
-    Log.i(TAG, "sync: wake=${Date(wake)} sleep=${sleep?.let(::Date)} ring=${Date(ring)}")
+    Log.i(TAG, "sync: wake=${Date(wake)} sleep=${sleep?.sleepTime?.let(::Date)} ring=${Date(ring)}")
 }
 
 private fun checkIntent(context: Context): PendingIntent = PendingIntent.getBroadcast(

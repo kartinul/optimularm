@@ -13,19 +13,17 @@ import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.tasks.await
 import java.util.Date
 
-// shortcut: hardcoded until QR pairing exists
-const val PAIR_ID = "gaga"
-
 data class WakeSettings(
     val wakeTime: String = "08:00",
     val alarmOn: Boolean = true,
     val sleepCutoff: String = "12:00",
 )
 
-private val settingsDoc get() = Firebase.firestore.collection("settings").document(PAIR_ID)
-private val pairingDoc get() = Firebase.firestore.collection("pairings").document(PAIR_ID)
-private val latestSleepQuery get() =
-    pairingDoc.collection("sleepEvents").orderBy("sleepTime", Query.Direction.DESCENDING).limit(1)
+data class SleepEvent(val id: String, val sleepTime: Long)
+
+private fun settingsDoc(id: String) = Firebase.firestore.collection("settings").document(id)
+private fun latestSleepQuery(id: String) =
+    pairingDoc(id).collection("sleepEvents").orderBy("sleepTime", Query.Direction.DESCENDING).limit(1)
 
 private fun DocumentSnapshot.toWakeSettings() = WakeSettings().let { defaults ->
     WakeSettings(
@@ -35,40 +33,31 @@ private fun DocumentSnapshot.toWakeSettings() = WakeSettings().let { defaults ->
     )
 }
 
-fun wakeSettingsFlow(): Flow<WakeSettings> = callbackFlow {
-    val registration = settingsDoc.addSnapshotListener { snapshot, _ ->
+private fun DocumentSnapshot.toSleepEvent() = getTimestamp("sleepTime")?.let { SleepEvent(id, it.toDate().time) }
+
+fun wakeSettingsFlow(id: String): Flow<WakeSettings> = callbackFlow {
+    val registration = settingsDoc(id).addSnapshotListener { snapshot, _ ->
         if (snapshot != null) trySend(snapshot.toWakeSettings())
     }
     awaitClose { registration.remove() }
 }
 
-suspend fun fetchWakeSettings(): WakeSettings = settingsDoc.get().await().toWakeSettings()
+suspend fun fetchWakeSettings(id: String): WakeSettings = settingsDoc(id).get().await().toWakeSettings()
 
-/** Latest sleep time after [after] (millis), or null. */
-suspend fun fetchLatestSleep(after: Long): Long? = latestSleepQuery
+/** Latest sleep event after [after] (millis), or null. */
+suspend fun fetchLatestSleep(id: String, after: Long): SleepEvent? = latestSleepQuery(id)
     .whereGreaterThan("sleepTime", Timestamp(Date(after)))
     .get().await()
-    .documents.firstOrNull()?.getTimestamp("sleepTime")?.toDate()?.time
+    .documents.firstOrNull()?.toSleepEvent()
 
-fun latestSleepFlow(): Flow<Long?> = callbackFlow {
-    val registration = latestSleepQuery.addSnapshotListener { snapshot, _ ->
-        if (snapshot != null) trySend(snapshot.documents.firstOrNull()?.getTimestamp("sleepTime")?.toDate()?.time)
+fun latestSleepFlow(id: String): Flow<SleepEvent?> = callbackFlow {
+    val registration = latestSleepQuery(id).addSnapshotListener { snapshot, _ ->
+        if (snapshot != null) trySend(snapshot.documents.firstOrNull()?.toSleepEvent())
     }
     awaitClose { registration.remove() }
 }
 
 fun saveWakeSettings(vararg fields: Pair<String, Any?>) {
-    settingsDoc.set(mapOf(*fields, "lastUpdated" to FieldValue.serverTimestamp()), SetOptions.merge())
-}
-
-fun pairStatusFlow(): Flow<String?> = callbackFlow {
-    val registration = pairingDoc.addSnapshotListener { snapshot, _ -> trySend(snapshot?.getString("status")) }
-    awaitClose { registration.remove() }
-}
-
-fun markPaired() {
-    pairingDoc.set(
-        mapOf("pairId" to PAIR_ID, "status" to "paired", "pairedAt" to FieldValue.serverTimestamp()),
-        SetOptions.merge()
-    )
+    val id = pairId ?: return
+    settingsDoc(id).set(mapOf(*fields, "lastUpdated" to FieldValue.serverTimestamp()), SetOptions.merge())
 }

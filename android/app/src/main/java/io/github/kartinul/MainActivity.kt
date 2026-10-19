@@ -5,6 +5,7 @@ import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
 import android.util.Log
+import com.google.firebase.FirebaseException
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
@@ -30,12 +31,18 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.Alignment
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
+import kotlinx.coroutines.flow.flowOf
 import androidx.core.content.ContextCompat
 import io.github.kartinul.data.latestSleepFlow
-import io.github.kartinul.data.pairStatusFlow
+import io.github.kartinul.data.pairId
 import io.github.kartinul.data.wakeSettingsFlow
 import io.github.kartinul.ui.ClockScreen
 import io.github.kartinul.ui.SettingsScreen
+import io.github.kartinul.ui.checkPermissions
+import androidx.lifecycle.compose.LifecycleResumeEffect
 import io.github.kartinul.ui.theme.OptimularmTheme
 
 class MainActivity : ComponentActivity() {
@@ -56,10 +63,15 @@ private val tabs = listOf("Clock" to R.drawable.ic_alarm, "Settings" to R.drawab
 fun App() {
     val context = LocalContext.current
     var tab by rememberSaveable { mutableIntStateOf(0) }
-    val settings by remember { wakeSettingsFlow() }.collectAsState(initial = null)
-    val pairStatus by remember { pairStatusFlow() }.collectAsState(initial = null)
-    val latestSleep by remember { latestSleepFlow() }.collectAsState(initial = null)
+    var pairedId by remember { mutableStateOf(pairId) }
+    val settings by remember(pairedId) { pairedId?.let(::wakeSettingsFlow) ?: flowOf(null) }.collectAsState(null)
+    val latestSleep by remember(pairedId) { pairedId?.let(::latestSleepFlow) ?: flowOf(null) }.collectAsState(null)
     var ringsAt by remember { mutableStateOf(ringAt(context)) }
+    var permissions by remember { mutableStateOf(checkPermissions(context)) }
+    LifecycleResumeEffect(Unit) {
+        permissions = checkPermissions(context)
+        onPauseOrDispose {}
+    }
 
     val notificationPermission =
         rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) {}
@@ -71,9 +83,12 @@ fun App() {
     }
 
     // any settings change or new sleep event (incl. late sleep) from either device re-runs sync
-    LaunchedEffect(settings, latestSleep) {
-        if (settings == null) return@LaunchedEffect
-        runCatching { sync(context) }.onFailure { Log.e(TAG, "sync failed", it) }
+    LaunchedEffect(pairedId, settings, latestSleep) {
+        try {
+            sync(context)
+        } catch (e: FirebaseException) {
+            Log.e(TAG, "sync failed", e)
+        }
         ringsAt = ringAt(context)
     }
 
@@ -92,9 +107,15 @@ fun App() {
             }
         },
     ) { innerPadding ->
-        val current = settings ?: return@Scaffold
         val content = Modifier.padding(innerPadding)
-        if (tab == 0) ClockScreen(current, ringsAt, content)
-        else SettingsScreen(pairStatus, content)
+        val current = settings
+        when {
+            tab == 1 -> SettingsScreen(pairedId, permissions, onPairChanged = { pairedId = pairId }, content)
+            pairedId == null -> Box(content.fillMaxSize(), contentAlignment = Alignment.Center) {
+                Text("Pair with your Mac in Settings")
+            }
+            current != null ->
+                ClockScreen(current, ringsAt, latestSleep?.sleepTime, permissions.count { !it.granted }, content)
+        }
     }
 }

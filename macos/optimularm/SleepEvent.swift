@@ -8,50 +8,21 @@
 import FirebaseFirestore
 import os
 
+// shortcut: hardcoded until QR pairing exists
+let pairId = "gaga"
+
 struct SleepEvent: Codable {
     @DocumentID var id: String?
-    let pairId: String
     let sleepTime: Date
-    let wakeByCeiling: String
-    var status: String
-    var wokeAt: Date? = nil
-    var actualWakeTime: Date? = nil
 }
 
-func writeSleepEvent() {
-    let event = SleepEvent(
-        pairId: "gaga",
-        sleepTime: Date(),
-        wakeByCeiling: "08:00",
-        status: "active"
-    )
-
-    Task {
-        do {
-            try Firestore.firestore().collection("sleepEvents").addDocument(from: event)
-            logger.info("Sleep event written")
-        } catch {
-            logger.error("Failed to write: \(error.localizedDescription)")
-        }
-    }
-}
-
-func markLatestEventInterrupted() {
-    let db = Firestore.firestore()
-
-    Task {
-        do {
-            let snapshot = try await db.collection("sleepEvents")
-                .order(by: "sleepTime", descending: true)
-                .limit(to: 1)
-                .getDocuments()
-
-            guard let doc = snapshot.documents.first else { return }
-
-            try await doc.reference.updateData(["status": "interrupted"])
-            logger.info("Marked latest event interrupted")
-        } catch {
-            logger.error("Failed to update: \(error.localizedDescription)")
-        }
+func writeSleepEvent(at sleepTime: Date = Date()) {
+    do {
+        try Firestore.firestore()
+            .collection("pairings").document(pairId).collection("sleepEvents")
+            .addDocument(from: SleepEvent(sleepTime: sleepTime))
+        logger.info("Sleep event written")
+    } catch {
+        logger.error("Failed to write: \(error.localizedDescription)")
     }
 }

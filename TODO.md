@@ -15,22 +15,22 @@
 ### Open questions
 
 - [x] How old can the "latest" sleep event be before it doesn't count? → only events after `settings.sleepCutoff` (default 12:00, set with the bedtime handle of the Clock dial)
-- [ ] Late sleep: if `sleepTime + 30min` is after the wake time, skip it and let the default alarm ring?
-- [ ] Does sleeping before midnight still mean "alarm = wake time exactly", or does the cycle maths apply every time?
+- [x] Late sleep: if `sleepTime + 30min` is after the wake time, skip it and let the default alarm ring? → yes, ring at the wake time
+- [x] Does sleeping before midnight still mean "alarm = wake time exactly", or does the cycle maths apply every time? → cycle maths every time
 
 The schema is in `CLAUDE.md`.
 
 ## macOS — fix what exists
 
 - [x] Drop `isPostMidnight` from `SleepEvent`
-- [ ] Shrink `SleepEvent` to `sleepTime` only: remove `pairId`, `wakeByCeiling`, `status`, `wokeAt`, `actualWakeTime`
-- [ ] Write sleep events to `pairings/{pairId}/sleepEvents` (still `"gaga"` until pairing exists)
-- [ ] Delete `markLatestEventInterrupted()`, the `didWakeNotification` observer and the "Mark Interrupted" test button
-- [ ] Delete `Helpers.swift` (`isPastMidnight()` is unused)
-- [ ] Logger subsystem mismatch: `optimularmApp.swift` uses `com.kartik.optimularm`, `Logging.swift` uses `com.kartinul.optimularm`
-- [ ] `scheduleNextMidnightCheck()` is never called and the icon update is still a TODO. Keep it or delete it?
-- [ ] Hide the test buttons behind `#if DEBUG`
-- [ ] Remove the unused template `ContentView.swift`
+- [x] Shrink `SleepEvent` to `sleepTime` only: remove `pairId`, `wakeByCeiling`, `status`, `wokeAt`, `actualWakeTime`
+- [x] Write sleep events to `pairings/{pairId}/sleepEvents` (still `"gaga"` until pairing exists)
+- [x] Delete `markLatestEventInterrupted()`, the `didWakeNotification` observer and the "Mark Interrupted" test button
+- [x] Delete `Helpers.swift` (`isPastMidnight()` is unused)
+- [x] Logger subsystem mismatch: `optimularmApp.swift` uses `com.kartik.optimularm`, `Logging.swift` uses `com.kartinul.optimularm`
+- [x] `scheduleNextMidnightCheck()` is never called and the icon update is still a TODO. Keep it or delete it?
+- [x] Hide the test buttons behind `#if DEBUG`
+- [x] Remove the unused template `ContentView.swift`
 
 ## macOS — build
 
@@ -64,14 +64,13 @@ The schema is in `CLAUDE.md`.
 - [ ] `CheckReceiver` (the check): read the latest sleep event → `CycleCalculator` (ignore events before `sleepCutoff`) → move the alarm with `scheduleAlarm`
 - [ ] Late-sleep path: a listener on `sleepEvents` that handles events arriving after wake − 90
 - [ ] Gradle:
-  - [ ] add WorkManager, CameraX + ML Kit barcode (tabs and icons need no extra deps)
-  - [ ] remove Crashlytics
-  - [ ] remove Analytics if not wanted
-- [ ] `.gitignore`: `android/build/` and `android/.gradle/` show up as untracked
+  - [x] add WorkManager, Google code scanner (no CameraX, no CAMERA permission) (tabs and icons need no extra deps)
+  - [x] remove Crashlytics
+  - [x] remove Analytics if not wanted
+- [x] `.gitignore`: `android/build/` and `android/.gradle/` show up as untracked
 - [ ] Manifest:
-  - [ ] remove the duplicate `POST_NOTIFICATIONS`
-  - [ ] add `CAMERA`
-  - [ ] register `CheckReceiver`, `BootReceiver`, `OptimularmMessagingService`
+  - [x] remove the duplicate `POST_NOTIFICATIONS`
+  - [ ] register `CheckReceiver`, `BootReceiver`
 - [ ] `OptimularmApplication`: Firebase init and Anonymous Auth
 - [ ] Onboarding checklist with deep links: notifications, exact alarms, battery unrestricted, camera
 - [ ] `PairingScreen`:
@@ -87,7 +86,6 @@ The schema is in `CLAUDE.md`.
 - [ ] Default bedtime 12:00 draws a 20 h arc on first launch; consider 22:00
 - [ ] `BootReceiver`: reschedule the check from `settings`
 - [ ] WorkManager 15-minute fallback poll
-- [ ] `OptimularmMessagingService`: triggers the same sync (backup path)
 - [ ] Own alarm, finish it: snooze, alarm volume/vibration, reschedule after reboot, Samsung battery "sleeping apps" exemption
 - [ ] `RatingScreen`: 1–5 rating after the alarm (notification → screen) → `ratings`
 
@@ -99,8 +97,6 @@ The schema is in `CLAUDE.md`.
 
 ## Later
 
-- [ ] Adaptive learning from `ratings` (bias which 90-min boundary gets picked; stays on Android)
-- [ ] Real sleep-stage sensing (accelerometer / mic)
 - [ ] Notification with a manual "cancel alarm" action
 - [ ] Rating tags and notes
 - [ ] Stats / history view

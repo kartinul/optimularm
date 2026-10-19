@@ -8,7 +8,6 @@
 import os
 import SwiftUI
 import FirebaseCore
-private let logger = Logger(subsystem: "com.kartik.optimularm", category: "app")
 
 @Observable
 final class AppState {
@@ -24,23 +23,14 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
         // Hide from Dock and Cmd+Tab by default — menu bar only
         NSApp.setActivationPolicy(.accessory)
-        
+
         NSWorkspace.shared.notificationCenter.addObserver(
             forName: NSWorkspace.screensDidSleepNotification,
             object: nil,
             queue: .main
-        ) { notification in
-            logger.info("Mac went to sleep")
+        ) { _ in
+            logger.info("Display went to sleep")
             writeSleepEvent()
-        }
-        
-        NSWorkspace.shared.notificationCenter.addObserver(
-            forName: NSWorkspace.didWakeNotification,
-            object: nil,
-            queue: .main
-        ) { notification in
-            logger.info("MAC WOKE UP")
-            markLatestEventInterrupted()
         }
     }
 }
@@ -52,22 +42,22 @@ struct optimularmApp: App {
 
     var body: some Scene {
         MenuBarExtra {
+            #if DEBUG
             Button("Test: Write Sleep Event") {
                 writeSleepEvent()
             }
-            
-            Button("Test: Mark Interrupted") {
-                markLatestEventInterrupted()
+            Button("Test: Sleep Event 3h Ago") {
+                writeSleepEvent(at: Date().addingTimeInterval(-3 * 3600))
             }
-            
             Divider()
-            
+            #endif
+
             Button("Settings") {
                 NSApp.setActivationPolicy(.regular)
             }
-            
+
             Divider()
-            
+
             Button("Quit") {
                 NSApp.terminate(nil)
             }

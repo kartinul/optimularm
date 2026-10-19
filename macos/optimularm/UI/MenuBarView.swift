@@ -5,9 +5,10 @@
 
 import SwiftUI
 
-/** The popover under the menu bar icon. */
+/** The panel under the menu bar icon. */
 struct MenuBarView: View {
     @Environment(AppState.self) private var state
+    let close: () -> Void
     let openSettings: () -> Void
 
     var body: some View {
@@ -20,7 +21,7 @@ struct MenuBarView: View {
             Divider()
             HStack {
                 Button(action: openSettings) {
-                    Label("Settings", systemImage: "gearshape")
+                    Label("Settings…", systemImage: "gearshape")
                 }
                 Spacer()
                 Button("Quit") { NSApp.terminate(nil) }
@@ -31,6 +32,8 @@ struct MenuBarView: View {
             .padding(.vertical, 10)
         }
         .frame(width: 300)
+        .focusEffectDisabled()
+        .onExitCommand(perform: close)
     }
 }
 
@@ -50,9 +53,6 @@ private struct AlarmPanel: View {
                         .font(.system(size: 46, weight: .semibold, design: .rounded))
                         .monospacedDigit()
                         .foregroundStyle(settings.alarmOn ? .primary : .tertiary)
-                    Text(settings.alarmOn ? "Rings at the end of a sleep cycle" : "Alarm off")
-                        .font(.callout)
-                        .foregroundStyle(.secondary)
                 }
                 Spacer()
                 Toggle("Alarm", isOn: Binding(get: { settings.alarmOn }, set: { _ in state.toggleAlarm() }))

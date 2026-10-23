@@ -5,9 +5,10 @@ import androidx.core.content.edit
 
 /** The cycle math's tunables, in minutes. Phone-only, like [AlarmPrefs]. */
 data class CalcPrefs(
-    val fallAsleep: Int = 15,
+    val fallAsleep: Int = 10,
     val cycle: Int = 90,
-    val feelGood: Int = 15,
+    val feelGoodBefore: Int = 5,
+    val feelGoodAfter: Int = 15,
     val lateNap: Int = 30,
 )
 
@@ -18,7 +19,8 @@ fun loadCalcPrefs(context: Context): CalcPrefs = prefs(context).let {
     CalcPrefs(
         fallAsleep = it.getInt("fallAsleep", defaults.fallAsleep),
         cycle = it.getInt("cycle", defaults.cycle),
-        feelGood = it.getInt("feelGood", defaults.feelGood),
+        feelGoodBefore = it.getInt("feelGoodBefore", defaults.feelGoodBefore),
+        feelGoodAfter = it.getInt("feelGoodAfter", defaults.feelGoodAfter),
         lateNap = it.getInt("lateNap", defaults.lateNap),
     )
 }
@@ -26,6 +28,7 @@ fun loadCalcPrefs(context: Context): CalcPrefs = prefs(context).let {
 fun saveCalcPrefs(context: Context, calc: CalcPrefs) = prefs(context).edit {
     putInt("fallAsleep", calc.fallAsleep)
     putInt("cycle", calc.cycle)
-    putInt("feelGood", calc.feelGood)
+    putInt("feelGoodBefore", calc.feelGoodBefore)
+    putInt("feelGoodAfter", calc.feelGoodAfter)
     putInt("lateNap", calc.lateNap)
 }

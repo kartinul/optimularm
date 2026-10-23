@@ -133,7 +133,7 @@ fun CalcScreen(
                 BedtimeRow(
                     time = format(time),
                     cycles = if (time == bestBedtime) "$cycles cycles · best" else "$cycles cycles",
-                    slept = "${duration(cycles * calc.cycle - calc.feelGood)} of sleep",
+                    slept = "${duration(cycles * calc.cycle - calc.feelGoodBefore)} of sleep",
                     best = time == bestBedtime,
                     past = time <= now,
                     onClick = {
@@ -163,8 +163,11 @@ fun CalcScreen(
             Tune("Sleep cycle", "one light → deep → REM loop", calc.cycle, 70..120, ::save) {
                 calc = calc.copy(cycle = it)
             }
-            Tune("Feel-good window", "waking this close to a cycle end is fine", calc.feelGood, 0..30, ::save, "± ") {
-                calc = calc.copy(feelGood = it)
+            Tune("Wake before cycle end", "waking this early is fine", calc.feelGoodBefore, 0..30, ::save, "− ") {
+                calc = calc.copy(feelGoodBefore = it)
+            }
+            Tune("Wake after cycle end", "waking this late is fine", calc.feelGoodAfter, 0..30, ::save, "+ ") {
+                calc = calc.copy(feelGoodAfter = it)
             }
             Tune("Late-sleep nap", "if you fall asleep less than a cycle before wake", calc.lateNap, 10..60, ::save) {
                 calc = calc.copy(lateNap = it)
@@ -229,11 +232,11 @@ private fun CycleDial(sleep: Long, ring: Long, wake: Long, calc: CalcPrefs, form
     val alarmIcon = painterResource(R.drawable.ic_alarm)
     val late = sleep >= checkTime(wake, calc)
     val asleep = if (late) sleep else sleep + calc.fallAsleep * MINUTE
-    // a cycle cut short or overrun by up to feelGood still counts as one
+    // a cycle cut short or overrun by up to feelGoodAfter still counts as one
     val cycles = buildList {
         var left = ((ring - asleep) / MINUTE).toInt()
         while (left > 0) {
-            val size = if (left - calc.cycle <= calc.feelGood) left else calc.cycle
+            val size = if (left - calc.cycle <= calc.feelGoodAfter) left else calc.cycle
             add(size)
             left -= size
         }

@@ -18,23 +18,23 @@ class CycleCalculatorTest {
 
     @Test
     fun sleepBeforeMidnightRings15AfterLastBoundary() =
-        assertEquals(at(20, 7, 50), ringTime(wake, at(19, 23, 50)))
+        assertEquals(at(20, 7, 45), ringTime(wake, at(19, 23, 50)))
 
     @Test
     fun earlyMorningSleepFitsOneCycle() =
-        assertEquals(wake, ringTime(wake, at(20, 6, 0)))
+        assertEquals(at(20, 7, 55), ringTime(wake, at(20, 6, 0)))
 
     @Test
-    fun boundaryExactlyAtWake() = assertEquals(wake, ringTime(wake, at(20, 0, 15)))
+    fun boundaryExactlyAtWake() = assertEquals(wake, ringTime(wake, at(20, 0, 20)))
 
     @Test
-    fun boundary15AfterWakeRingsAtWake() = assertEquals(wake, ringTime(wake, at(20, 0, 30)))
+    fun boundary5AfterWakeRingsAtWake() = assertEquals(wake, ringTime(wake, at(20, 0, 25)))
 
     @Test
-    fun boundary20AfterWakeIsTooFar() = assertEquals(at(20, 7, 5), ringTime(wake, at(20, 0, 35)))
+    fun boundary10AfterWakeIsTooFar() = assertEquals(at(20, 6, 55), ringTime(wake, at(20, 0, 30)))
 
     @Test
-    fun boundary15BeforeWakeRingsAtWake() = assertEquals(wake, ringTime(wake, at(20, 0, 0)))
+    fun boundary15BeforeWakeRingsAtWake() = assertEquals(wake, ringTime(wake, at(20, 0, 5)))
 
     @Test
     fun lateSleepNaps30() = assertEquals(at(20, 7, 30), ringTime(wake, at(20, 7, 0)))
@@ -45,17 +45,17 @@ class CycleCalculatorTest {
     @Test
     fun customPrefs() = assertEquals(
         at(20, 6, 40),
-        ringTime(wake, at(19, 23, 55), CalcPrefs(fallAsleep = 5, cycle = 100, feelGood = 0)),
+        ringTime(wake, at(19, 23, 55), CalcPrefs(fallAsleep = 5, cycle = 100, feelGoodBefore = 0, feelGoodAfter = 0)),
     )
 
     @Test
     fun noCycleFitsWhenFallAsleepIsLong() = assertEquals(
-        wake, ringTime(wake, at(20, 6, 25), CalcPrefs(fallAsleep = 45, feelGood = 0)),
+        wake, ringTime(wake, at(20, 6, 25), CalcPrefs(fallAsleep = 45, feelGoodBefore = 0, feelGoodAfter = 0)),
     )
 
     @Test
     fun bedtimesRingAtWake() = assertEquals(
-        listOf(at(20, 0, 30) to 5, at(20, 2, 0) to 4),
+        listOf(at(20, 0, 25) to 5, at(20, 1, 55) to 4),
         bedtimes(wake).filter { it.second in 4..5 },
     )
 

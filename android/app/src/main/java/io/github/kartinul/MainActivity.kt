@@ -69,6 +69,7 @@ fun App() {
     var ringsAt by remember { mutableStateOf(ringAt(context)) }
     var calcVersion by remember { mutableIntStateOf(0) }
     val snoozed by remember { snoozedUntilFlow(context) }.collectAsState(null)
+    var skipped by remember { mutableStateOf(skippedWake(context) != null) }
     var permissions by remember { mutableStateOf(checkPermissions(context)) }
     LifecycleResumeEffect(Unit) {
         permissions = checkPermissions(context)
@@ -85,7 +86,7 @@ fun App() {
     }
 
     // any settings change, new sleep event (incl. late sleep) or calc tweak re-runs sync
-    LaunchedEffect(pairedId, settings, latestSleep, calcVersion) {
+    LaunchedEffect(pairedId, settings, latestSleep, calcVersion, skipped) {
         try {
             sync(context)
         } catch (e: FirebaseException) {
@@ -116,7 +117,12 @@ fun App() {
             current != null && tab == 1 ->
                 CalcScreen(current, latestSleep, onCalcChanged = { calcVersion++ }, content)
             current != null ->
-                ClockScreen(current, ringsAt, latestSleep, permissions.count { !it.granted }, snoozedUntil = snoozed, onCancelSnooze = { cancelSnooze(context) }, content)
+                ClockScreen(current, ringsAt, latestSleep, permissions.count { !it.granted }, snoozedUntil = snoozed, skipped = skipped, content) {
+                    if (snoozed != null) cancelSnooze(context) else {
+                        toggleSkip(context)
+                        skipped = skippedWake(context) != null
+                    }
+                }
         }
     }
 }

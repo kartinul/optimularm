@@ -55,8 +55,9 @@ fun ClockScreen(
     latestSleep: SleepEvent?,
     missingPermissions: Int,
     snoozedUntil: Long?,
-    onCancelSnooze: () -> Unit,
+    skipped: Boolean,
     modifier: Modifier = Modifier,
+    onCancel: () -> Unit,
 ) {
     val context = LocalContext.current
     var now by remember { mutableLongStateOf(System.currentTimeMillis()) }
@@ -97,6 +98,7 @@ fun ClockScreen(
         Text(
             when {
                 snoozedUntil != null -> "snoozed · " + timeUntil(snoozedUntil - now)
+                next != null && skipped -> "skipped · " + timeUntil(next - now)
                 next != null -> timeUntil(next - now)
                 else -> "off"
             },
@@ -115,7 +117,16 @@ fun ClockScreen(
         Spacer(Modifier.weight(1f))
         Row(horizontalArrangement = Arrangement.spacedBy(16.dp), verticalAlignment = Alignment.CenterVertically) {
             BigToggle(settings.alarmOn) { saveWakeSettings("alarmOn" to it) }
-            CancelSnoozeButton(enabled = snoozedUntil != null, onClick = onCancelSnooze)
+            CancelButton(
+                enabled = snoozedUntil != null || settings.alarmOn,
+                active = snoozedUntil != null || skipped,
+                label = when {
+                    snoozedUntil != null -> "Cancel snooze"
+                    skipped -> "Unskip next alarm"
+                    else -> "Skip next alarm"
+                },
+                onClick = onCancel,
+            )
         }
         Box(Modifier.weight(1f).padding(top = 16.dp)) {
             if (missingPermissions > 0) Text(
@@ -161,25 +172,29 @@ private fun BigToggle(on: Boolean, onChange: (Boolean) -> Unit) {
     }
 }
 
-/** Round red ✕, as tall as the toggle: cancels a pending snooze. */
+/** Round ✕, as tall as the toggle: cancels a snooze, or skips/unskips the next alarm. Red while active. */
 @Composable
-private fun CancelSnoozeButton(enabled: Boolean, onClick: () -> Unit) {
+private fun CancelButton(enabled: Boolean, active: Boolean, label: String, onClick: () -> Unit) {
     val colors = MaterialTheme.colorScheme
     val haptics = LocalHapticFeedback.current
     Box(
         Modifier
             .size(TRACK_HEIGHT)
             .clip(CircleShape)
-            .background(if (enabled) colors.errorContainer else colors.surfaceContainerHigh)
-            .clickable(enabled = enabled, role = Role.Button, onClickLabel = "Cancel snooze") {
+            .background(if (active) colors.errorContainer else colors.surfaceContainerHigh)
+            .clickable(enabled = enabled, role = Role.Button, onClickLabel = label) {
                 haptics.performHapticFeedback(HapticFeedbackType.Reject)
                 onClick()
             },
         contentAlignment = Alignment.Center,
     ) {
         Icon(
-            painterResource(R.drawable.ic_close), contentDescription = "Cancel snooze",
-            tint = if (enabled) colors.onErrorContainer else colors.outline,
+            painterResource(R.drawable.ic_close), contentDescription = label,
+            tint = when {
+                active -> colors.onErrorContainer
+                enabled -> colors.onSurfaceVariant
+                else -> colors.outline
+            },
             modifier = Modifier.size(36.dp),
         )
     }

@@ -22,6 +22,7 @@ private const val WAKE = "wake"
 private const val DONE_WAKE = "doneWake"
 private const val EVENT_ID = "eventId"
 private const val RUNG_EVENT_ID = "rungEventId"
+private const val SKIP_WAKE = "skipWake"
 
 fun ownAlarmIntent(context: Context): PendingIntent = PendingIntent.getBroadcast(
     context, 0, Intent(context, AlarmReceiver::class.java), PendingIntent.FLAG_IMMUTABLE
@@ -30,6 +31,13 @@ fun ownAlarmIntent(context: Context): PendingIntent = PendingIntent.getBroadcast
 private fun alarmPrefs(context: Context) = context.getSharedPreferences("alarm", Context.MODE_PRIVATE)
 
 fun ringAt(context: Context): Long? = alarmPrefs(context).getLong(RING_AT, 0).takeIf { it > 0 }
+
+/** The wake time the user chose to skip, so sync() rings the day after. */
+fun skippedWake(context: Context): Long? = alarmPrefs(context).getLong(SKIP_WAKE, 0).takeIf { it > 0 }
+
+fun toggleSkip(context: Context) = alarmPrefs(context).edit {
+    if (skippedWake(context) != null) remove(SKIP_WAKE) else putLong(SKIP_WAKE, alarmPrefs(context).getLong(WAKE, 0))
+}
 
 /** The wake time whose alarm already rang, so sync() moves on to the next day. */
 fun doneWake(context: Context): Long = alarmPrefs(context).getLong(DONE_WAKE, 0)

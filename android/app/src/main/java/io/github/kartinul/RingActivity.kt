@@ -27,6 +27,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import io.github.kartinul.data.canSnooze
 import io.github.kartinul.data.loadAlarmPrefs
+import io.github.kartinul.data.Night
+import io.github.kartinul.data.loadCalcPrefs
+import io.github.kartinul.data.recordNight
 import io.github.kartinul.data.saveRating
 import io.github.kartinul.ui.theme.OptimularmTheme
 
@@ -85,6 +88,12 @@ class RingActivity : ComponentActivity() {
             for (rating in 1..5) {
                 FilledTonalButton(onClick = {
                     saveRating(rating, rungEventId(this@RingActivity))
+                    val (ring, sleep) = rungAlarm(this@RingActivity)
+                    val calc = loadCalcPrefs(this@RingActivity)
+                    val wake = doneWake(this@RingActivity)
+                    // a late-sleep nap, the default alarm or one capped at wake says nothing about cycle ends
+                    val optimized = sleep != null && sleep < checkTime(wake, calc) && ring < wake
+                    recordNight(this@RingActivity, Night(sleep, ring, rating, calc.feelGoodAfter, optimized))
                     finish()
                 }) {
                     Text("$rating")

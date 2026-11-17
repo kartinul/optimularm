@@ -7,6 +7,7 @@ import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
 import androidx.core.content.edit
+import io.github.kartinul.data.WakeSettings
 import io.github.kartinul.data.loadAlarmPrefs
 import io.github.kartinul.data.setSnoozesUsed
 import io.github.kartinul.data.snoozesUsed
@@ -23,6 +24,9 @@ private const val DONE_WAKE = "doneWake"
 private const val EVENT_ID = "eventId"
 private const val RUNG_EVENT_ID = "rungEventId"
 private const val SKIP_WAKE = "skipWake"
+private const val SLEEP = "sleep"
+private const val RUNG_SLEEP = "rungSleep"
+private const val RUNG_AT = "rungAt"
 
 fun ownAlarmIntent(context: Context): PendingIntent = PendingIntent.getBroadcast(
     context, 0, Intent(context, AlarmReceiver::class.java), PendingIntent.FLAG_IMMUTABLE
@@ -45,6 +49,11 @@ fun doneWake(context: Context): Long = alarmPrefs(context).getLong(DONE_WAKE, 0)
 /** The sleep event behind the alarm that rang last, for the rating. */
 fun rungEventId(context: Context): String? = alarmPrefs(context).getString(RUNG_EVENT_ID, null)
 
+/** The alarm that rang last: when it was set to ring, and the sleep time it was computed from (null = default alarm). */
+fun rungAlarm(context: Context): Pair<Long, Long?> = alarmPrefs(context).run {
+    getLong(RUNG_AT, System.currentTimeMillis()) to getLong(RUNG_SLEEP, 0).takeIf { it > 0 }
+}
+
 fun nextOccurrence(time: String, now: Calendar = Calendar.getInstance()): Calendar {
     val (hour, minute) = time.split(":").map(String::toInt)
     return (now.clone() as Calendar).apply {
@@ -56,13 +65,32 @@ fun nextOccurrence(time: String, now: Calendar = Calendar.getInstance()): Calend
     }
 }
 
-fun scheduleAlarm(context: Context, millis: Long, wake: Long, eventId: String?) {
+/** The first wake time after [from]: [WakeSettings.weekendWakeTime] on Saturday and Sunday, else [WakeSettings.wakeTime]. */
+fun nextWake(settings: WakeSettings, from: Calendar = Calendar.getInstance()): Calendar {
+    val day = from.clone() as Calendar
+    while (true) {
+        val weekend = day.get(Calendar.DAY_OF_WEEK) in listOf(Calendar.SATURDAY, Calendar.SUNDAY)
+        val (hour, minute) = (settings.weekendWakeTime?.takeIf { weekend } ?: settings.wakeTime).split(":").map(String::toInt)
+        val wake = (day.clone() as Calendar).apply {
+            set(Calendar.HOUR_OF_DAY, hour)
+            set(Calendar.MINUTE, minute)
+            set(Calendar.SECOND, 0)
+            set(Calendar.MILLISECOND, 0)
+        }
+        if (wake.after(from)) return wake
+        day.add(Calendar.DAY_OF_MONTH, 1)
+    }
+}
+
+fun scheduleAlarm(context: Context, millis: Long, wake: Long, sleep: Long?, eventId: String?) {
     val showIntent = PendingIntent.getActivity(
         context, 0, Intent(context, MainActivity::class.java), PendingIntent.FLAG_IMMUTABLE
     )
     context.getSystemService(AlarmManager::class.java)
         .setAlarmClock(AlarmManager.AlarmClockInfo(millis, showIntent), ownAlarmIntent(context))
-    alarmPrefs(context).edit { putLong(RING_AT, millis).putLong(WAKE, wake).putString(EVENT_ID, eventId) }
+    alarmPrefs(context).edit {
+        putLong(RING_AT, millis).putLong(WAKE, wake).putLong(SLEEP, sleep ?: 0).putString(EVENT_ID, eventId)
+    }
 }
 
 /** A separate alarm (request code 2), so sync() never overwrites a snooze. */
@@ -120,6 +148,8 @@ class AlarmReceiver : BroadcastReceiver() {
             prefs.edit {
                 putLong(DONE_WAKE, prefs.getLong(WAKE, 0))
                 putString(RUNG_EVENT_ID, prefs.getString(EVENT_ID, null))
+                putLong(RUNG_AT, prefs.getLong(RING_AT, System.currentTimeMillis()))
+                putLong(RUNG_SLEEP, prefs.getLong(SLEEP, 0))
                 remove(RING_AT)
             }
             setSnoozesUsed(context, 0)

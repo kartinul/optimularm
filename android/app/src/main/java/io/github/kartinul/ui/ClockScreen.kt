@@ -43,7 +43,7 @@ import io.github.kartinul.cutoffBefore
 import io.github.kartinul.data.SleepEvent
 import io.github.kartinul.data.WakeSettings
 import io.github.kartinul.data.loadCalcPrefs
-import io.github.kartinul.nextOccurrence
+import io.github.kartinul.nextWake
 import io.github.kartinul.ringTime
 import io.github.kartinul.data.saveWakeSettings
 import kotlinx.coroutines.delay
@@ -75,7 +75,7 @@ fun ClockScreen(
     }
     // same rule as sync(), without the already-dismissed check
     val previewRing = preview?.let { (bed, wake) ->
-        val wakeAt = nextOccurrence(wake).timeInMillis
+        val wakeAt = nextWake(settings.copy(wakeTime = wake)).timeInMillis
         val sleep = latestSleep?.sleepTime?.takeIf { it in cutoffBefore(wakeAt, bed)..wakeAt }
         ringTime(wakeAt, sleep, loadCalcPrefs(context))
     }

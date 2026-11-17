@@ -113,11 +113,11 @@ fun App() {
         val current = settings
         when {
             pairedId == null -> PairScreen(onPairChanged = { pairedId = pairId }, content)
-            tab == 2 -> SettingsScreen(pairedId, permissions, onPairChanged = { pairedId = pairId }, content)
+            tab == 2 -> SettingsScreen(pairedId, current, permissions, onPairChanged = { pairedId = pairId }, content)
             current != null && tab == 1 ->
                 CalcScreen(current, latestSleep, onCalcChanged = { calcVersion++ }, content)
             current != null ->
-                ClockScreen(current, ringsAt, latestSleep, permissions.count { !it.granted }, snoozedUntil = snoozed, skipped = skipped, content) {
+                ClockScreen(current, ringsAt, latestSleep, permissions.count { !it.granted && it.required }, snoozedUntil = snoozed, skipped = skipped, content) {
                     if (snoozed != null) cancelSnooze(context) else {
                         toggleSkip(context)
                         skipped = skippedWake(context) != null

@@ -53,7 +53,9 @@ import io.github.kartinul.data.SleepEvent
 import io.github.kartinul.data.WakeSettings
 import io.github.kartinul.data.loadCalcPrefs
 import io.github.kartinul.data.saveCalcPrefs
-import io.github.kartinul.nextOccurrence
+import io.github.kartinul.nextWake
+import io.github.kartinul.data.loadNights
+import androidx.compose.material3.Switch
 import io.github.kartinul.ringTime
 import kotlin.math.PI
 import kotlin.math.cos
@@ -82,7 +84,7 @@ fun CalcScreen(
     val colors = MaterialTheme.colorScheme
     val now = System.currentTimeMillis()
     var calc by remember { mutableStateOf(loadCalcPrefs(context)) }
-    val wake = remember(settings.wakeTime) { nextOccurrence(settings.wakeTime).timeInMillis }
+    val wake = remember(settings) { nextWake(settings).timeInMillis }
     val start = wake - SPAN * MINUTE
     fun minutesOf(time: Long) = ((time.coerceIn(start, wake) - start) / MINUTE).toInt() / STEP * STEP
     // same rule as sync(): only sleep after tonight's cutoff counts
@@ -171,6 +173,37 @@ fun CalcScreen(
             }
             Tune("Late-sleep nap", "if you fall asleep less than a cycle before wake", calc.lateNap, 10..60, ::save) {
                 calc = calc.copy(lateNap = it)
+            }
+            Row(Modifier.padding(top = 12.dp), verticalAlignment = Alignment.CenterVertically) {
+                Column(Modifier.weight(1f)) {
+                    Text("Auto-tune", style = MaterialTheme.typography.titleSmall)
+                    Text(
+                        "morning ratings adjust \"wake after cycle end\"",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = colors.onSurfaceVariant,
+                    )
+                }
+                Switch(checked = calc.autoTune, onCheckedChange = {
+                    calc = calc.copy(autoTune = it)
+                    save()
+                })
+            }
+        }
+
+        val nights = remember { loadNights(context).reversed() }
+        if (nights.isNotEmpty()) Section("Last nights · avg %.1f".format(nights.map { it.rating }.average())) {
+            val day = { time: Long -> DateFormat.format("EEE d", time).toString() }
+            nights.take(14).forEach { night ->
+                Row(Modifier.fillMaxWidth().padding(vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
+                    Text(day(night.ring), style = MaterialTheme.typography.bodyLarge, modifier = Modifier.width(72.dp))
+                    Text(
+                        (night.sleep?.let(format) ?: "—") + " → " + format(night.ring),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = colors.onSurfaceVariant,
+                        modifier = Modifier.weight(1f),
+                    )
+                    Text("★".repeat(night.rating), color = colors.primary)
+                }
             }
         }
     }

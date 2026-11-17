@@ -4,10 +4,12 @@ import android.content.Context
 import android.content.SharedPreferences
 import androidx.core.content.edit
 import com.google.firebase.Firebase
+import com.google.firebase.Timestamp
 import com.google.firebase.auth.auth
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.firestore
 import kotlinx.coroutines.tasks.await
+import java.util.Date
 
 private const val QR_PREFIX = "optimularm:"
 private lateinit var prefs: SharedPreferences
@@ -35,6 +37,11 @@ suspend fun joinPairing(qr: String): Boolean {
     ).await()
     pairId = id
     return true
+}
+
+/** Shows the Mac when the alarm rings; null = off. */
+fun reportRingAt(id: String, ring: Long?) {
+    pairingDoc(id).update("ringAt", ring?.let { Timestamp(Date(it)) } ?: FieldValue.delete())
 }
 
 /** Local state clears at once; Firestore queues the remote reset, so this works offline too. */

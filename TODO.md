@@ -18,4 +18,4 @@ The schema is in `CLAUDE.md`.
 
 - [ ] Notification with a manual "cancel alarm" action
 - [ ] Rating tags and notes
-- [ ] Stats / history view
+- [x] Stats / history view (Calculations tab, phone-local)

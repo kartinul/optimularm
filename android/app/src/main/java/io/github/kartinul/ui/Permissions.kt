@@ -1,17 +1,19 @@
 package io.github.kartinul.ui
 
 import android.app.AlarmManager
+import android.app.AppOpsManager
 import android.app.NotificationManager
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.os.Build
 import android.os.PowerManager
+import android.os.Process
 import android.provider.Settings
 import androidx.core.app.NotificationManagerCompat
 
-/** Something the alarm needs, and the settings screen that grants it. */
-data class Permission(val name: String, val granted: Boolean, val fix: Intent)
+/** Something the alarm needs (or, if not [required], improves), and the settings screen that grants it. */
+data class Permission(val name: String, val granted: Boolean, val fix: Intent, val required: Boolean = true)
 
 fun checkPermissions(context: Context): List<Permission> {
     val packageName = context.packageName
@@ -40,6 +42,13 @@ fun checkPermissions(context: Context): List<Permission> {
             "Battery unrestricted",
             power.isIgnoringBatteryOptimizations(packageName),
             Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS, packageUri),
+        ),
+        Permission(
+            "Usage access",
+            context.getSystemService(AppOpsManager::class.java)
+                .unsafeCheckOpNoThrow(AppOpsManager.OPSTR_GET_USAGE_STATS, Process.myUid(), packageName) == AppOpsManager.MODE_ALLOWED,
+            Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS),
+            required = false,
         ),
     )
 }

@@ -5,29 +5,14 @@
 //  Created by Kartik Sharma on 14/08/26.
 //
 
-import FirebaseFirestore
-import os
+import Foundation
 
-struct SleepEvent: Codable {
-    @DocumentID var id: String?
-    let sleepTime: Date
+/** The event id is the sleep time itself, so retrying a write overwrites instead of duplicating. */
+func writeSleepEvent(_ pairId: String, _ sleepTime: Date) async throws {
+    let id = Int(sleepTime.timeIntervalSince1970)
+    try await setDocument("pairings/\(pairId)/sleepEvents/\(id)", ["sleepTime": sleepTime], replace: true)
 }
 
-private func sleepEvents(_ pairId: String) -> CollectionReference {
-    Firestore.firestore().collection("pairings").document(pairId).collection("sleepEvents")
-}
-
-func writeSleepEvent(pairId: String) {
-    do {
-        try sleepEvents(pairId).addDocument(from: SleepEvent(sleepTime: Date()))
-        logger.info("Sleep event written")
-    } catch {
-        logger.error("Failed to write: \(error.localizedDescription)")
-    }
-}
-
-func listenLatestSleep(_ pairId: String, onChange: @escaping (Date?) -> Void) -> ListenerRegistration {
-    sleepEvents(pairId).order(by: "sleepTime", descending: true).limit(to: 1).addSnapshotListener { snapshot, _ in
-        onChange(try? snapshot?.documents.first?.data(as: SleepEvent.self).sleepTime)
-    }
+func fetchLatestSleep(_ pairId: String) async throws -> Date? {
+    try await latestDocument("pairings/\(pairId)", "sleepEvents", orderBy: "sleepTime")?["sleepTime"] as? Date
 }

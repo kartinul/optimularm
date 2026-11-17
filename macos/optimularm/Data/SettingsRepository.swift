@@ -3,43 +3,38 @@
 //  optimularm
 //
 
-import FirebaseFirestore
+import Foundation
 
-struct WakeSettings {
+struct WakeSettings: Equatable {
     var wakeTime = "07:00"
+    /** Saturday and Sunday's wake time; nil = same as [wakeTime]. */
+    var weekendWakeTime: String?
     var alarmOn = true
     var sleepCutoff = "00:00"
 }
 
-private func settingsDoc(_ pairId: String) -> DocumentReference {
-    Firestore.firestore().collection("settings").document(pairId)
-}
-
-func listenSettings(_ pairId: String, onChange: @escaping (WakeSettings) -> Void) -> ListenerRegistration {
-    settingsDoc(pairId).addSnapshotListener { snapshot, _ in
-        guard let snapshot else { return }
-        let data = snapshot.data() ?? [:]
+extension WakeSettings {
+    init(_ fields: Fields) {
         let defaults = WakeSettings()
-        onChange(WakeSettings(
-            wakeTime: data["wakeTime"] as? String ?? defaults.wakeTime,
-            alarmOn: data["alarmOn"] as? Bool ?? defaults.alarmOn,
-            sleepCutoff: data["sleepCutoff"] as? String ?? defaults.sleepCutoff
-        ))
+        wakeTime = fields["wakeTime"] as? String ?? defaults.wakeTime
+        weekendWakeTime = fields["weekendWakeTime"] as? String
+        alarmOn = fields["alarmOn"] as? Bool ?? defaults.alarmOn
+        sleepCutoff = fields["sleepCutoff"] as? String ?? defaults.sleepCutoff
+    }
+
+    var fields: Fields {
+        var fields: Fields = ["wakeTime": wakeTime, "alarmOn": alarmOn, "sleepCutoff": sleepCutoff, "lastUpdated": Date()]
+        fields["weekendWakeTime"] = weekendWakeTime
+        return fields
     }
 }
 
-func saveSettings(_ pairId: String, _ fields: [String: Any]) {
-    settingsDoc(pairId).setData(fields.merging(["lastUpdated": FieldValue.serverTimestamp()]) { $1 }, merge: true)
+func fetchSettings(_ pairId: String) async throws -> WakeSettings {
+    WakeSettings(try await getDocument("settings/\(pairId)") ?? [:])
 }
 
-func createDefaultSettings(_ pairId: String) async throws {
-    let defaults = WakeSettings()
-    try await settingsDoc(pairId).setData([
-        "wakeTime": defaults.wakeTime,
-        "alarmOn": defaults.alarmOn,
-        "sleepCutoff": defaults.sleepCutoff,
-        "lastUpdated": FieldValue.serverTimestamp(),
-    ])
+func saveSettings(_ pairId: String, _ settings: WakeSettings) async throws {
+    try await setDocument("settings/\(pairId)", settings.fields, delete: settings.weekendWakeTime == nil ? ["weekendWakeTime"] : [])
 }
 
 private let timeFormat: DateFormatter = {

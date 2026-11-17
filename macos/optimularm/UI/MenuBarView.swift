@@ -13,10 +13,18 @@ struct MenuBarView: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            if let pairId = state.pairId, state.paired {
-                AlarmPanel(pairId: pairId)
+            if state.paired {
+                AlarmPanel()
             } else {
                 PairPanel()
+            }
+            if let error = state.error {
+                Label(error, systemImage: "exclamationmark.triangle.fill")
+                    .font(.caption)
+                    .foregroundStyle(.red)
+                    .padding(.horizontal, 16)
+                    .padding(.bottom, 10)
+                    .frame(maxWidth: .infinity, alignment: .leading)
             }
             Divider()
             HStack {
@@ -39,7 +47,6 @@ struct MenuBarView: View {
 
 private struct AlarmPanel: View {
     @Environment(AppState.self) private var state
-    let pairId: String
 
     var body: some View {
         let settings = state.settings
@@ -62,15 +69,36 @@ private struct AlarmPanel: View {
 
             VStack(spacing: 0) {
                 Row(icon: "alarm", title: "Wake up") {
-                    QuarterStepper(time: settings.wakeTime) { saveSettings(pairId, ["wakeTime": $0]) }
+                    QuarterStepper(time: settings.wakeTime) { time in state.update { $0.wakeTime = time } }
+                }
+                Divider()
+                Row(icon: "calendar", title: "Weekends") {
+                    if let weekend = settings.weekendWakeTime {
+                        QuarterStepper(time: weekend) { time in state.update { $0.weekendWakeTime = time } }
+                        Button("Same as weekdays", systemImage: "xmark.circle.fill") {
+                            state.update { $0.weekendWakeTime = nil }
+                        }
+                        .labelStyle(.iconOnly)
+                        .buttonStyle(.borderless)
+                        .foregroundStyle(.secondary)
+                    } else {
+                        Button("Same") { state.update { $0.weekendWakeTime = settings.wakeTime } }
+                            .buttonStyle(.borderless)
+                            .foregroundStyle(.secondary)
+                    }
                 }
                 Divider()
                 Row(icon: "bed.double", title: "Bedtime") {
-                    QuarterStepper(time: settings.sleepCutoff) { saveSettings(pairId, ["sleepCutoff": $0]) }
+                    QuarterStepper(time: settings.sleepCutoff) { time in state.update { $0.sleepCutoff = time } }
                 }
                 Divider()
                 Row(icon: "moon.zzz", title: "Last sleep") {
                     Text(state.lastSleep?.formatted(.relative(presentation: .named)) ?? "—")
+                        .foregroundStyle(.secondary)
+                }
+                Divider()
+                Row(icon: "bell", title: "Phone rings") {
+                    Text(state.pairing.ringAt.map { $0.formatted(.dateTime.weekday().hour().minute()) } ?? "—")
                         .foregroundStyle(.secondary)
                 }
             }

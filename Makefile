@@ -1,8 +1,10 @@
 MAC_BUILD := build/mac
 MAC_APP := $(MAC_BUILD)/Build/Products/Release/optimularm.app
-XCODEBUILD := xcodebuild -project macos/optimularm.xcodeproj -scheme optimularm -derivedDataPath $(MAC_BUILD) -allowProvisioningUpdates
+XCODEBUILD := xcodebuild -project macos/optimularm.xcodeproj -scheme optimularm -derivedDataPath $(MAC_BUILD) -destination generic/platform=macOS CODE_SIGNING_ALLOWED=NO
 
 .PHONY: install mac mac-install android android-install test rules logs
+
+.DEFAULT_GOAL := mac-install
 
 install: mac-install android-install
 

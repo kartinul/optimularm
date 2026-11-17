@@ -4,7 +4,6 @@
 //
 
 import AppKit
-import FirebaseCore
 import ServiceManagement
 import SwiftUI
 import os
@@ -24,8 +23,6 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     private var settingsWindow: NSWindow?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
-        FirebaseApp.configure()
-
         // Hide from Dock and Cmd+Tab by default — menu bar only
         NSApp.setActivationPolicy(.accessory)
 
@@ -40,15 +37,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         #endif
 
         watchDisplaySleep(state)
-        Task { @MainActor in
-            do {
-                _ = try await signIn()
-            } catch {
-                logger.error("Sign-in failed: \(error.localizedDescription)")
-            }
-            // listeners start after sign-in so the security rules see our uid
-            state.listen()
-        }
+        state.startPolling()
     }
 
     /** Left click opens the panel, right click flips the alarm on/off. */
@@ -97,6 +86,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         panel.makeKeyAndOrderFront(nil)
         panel.invalidateShadow() // shadow follows the rounded mask, not the square frame
         button.highlight(true)
+        state.visible = true
 
         // any click in another app closes the panel, like a real menu
         outsideClickMonitor = NSEvent.addGlobalMonitorForEvents(matching: [.leftMouseDown, .rightMouseDown]) { [weak self] _ in
@@ -119,6 +109,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     private func closePanel() {
         panel.orderOut(nil)
         statusItem.button?.highlight(false)
+        state.visible = settingsWindow?.isVisible == true
         if let outsideClickMonitor { NSEvent.removeMonitor(outsideClickMonitor) }
         outsideClickMonitor = nil
     }
@@ -142,6 +133,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         NSApp.setActivationPolicy(.regular)
         NSApp.activate()
         settingsWindow?.makeKeyAndOrderFront(nil)
+        state.visible = true
     }
 
     private func settingsTab(_ title: String, _ symbol: String, _ view: some View) -> NSTabViewItem {
@@ -156,6 +148,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
 
     func windowWillClose(_ notification: Notification) {
         NSApp.setActivationPolicy(.accessory)
+        state.visible = panel.isVisible
     }
 
     /** The alarm glyph is top-heavy (bells), so it is drawn 1 pt low to sit centered with other menu bar icons. */

@@ -35,6 +35,10 @@ struct PhoneTab: View {
                           systemImage: state.paired ? "checkmark.circle.fill" : "hourglass")
                         .foregroundStyle(state.paired ? .green : .secondary)
                 }
+                if let error = state.error {
+                    Label(error, systemImage: "exclamationmark.triangle.fill")
+                        .foregroundStyle(.red)
+                }
                 if let pairId = state.pairId, !state.paired {
                     PairingView(pairId: pairId)
                         .padding(.vertical, 8)

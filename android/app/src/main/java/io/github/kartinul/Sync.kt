@@ -17,6 +17,9 @@ import androidx.work.WorkManager
 import androidx.work.WorkerParameters
 import io.github.kartinul.data.fetchLatestSleep
 import io.github.kartinul.data.loadCalcPrefs
+import io.github.kartinul.data.loadNights
+import io.github.kartinul.data.saveCalcPrefs
+import io.github.kartinul.data.tunedFeelGoodAfter
 import io.github.kartinul.data.fetchWakeSettings
 import io.github.kartinul.data.pairId
 import io.github.kartinul.data.reportRingAt
@@ -58,8 +61,12 @@ suspend fun sync(context: Context) {
         fetchLatestSleep(id, cutoff, Source.CACHE)
     }
     // whichever device was put down last says when you actually went to bed
-    val sleep = listOfNotNull(macSleep?.sleepTime, phoneSleep(context, cutoff)).maxOrNull()?.takeIf { it < wake }
-    val calc = loadCalcPrefs(context)
+    val phone = if (settings.phoneSleep) phoneSleep(context, cutoff) else null
+    val sleep = listOfNotNull(macSleep?.sleepTime, phone).maxOrNull()?.takeIf { it < wake }
+    val calc = loadCalcPrefs(context).let { calc ->
+        val tuned = if (settings.autoTune) tunedFeelGoodAfter(loadNights(context), calc.feelGoodAfter) else calc.feelGoodAfter
+        calc.copy(feelGoodAfter = tuned).also { if (it != calc) saveCalcPrefs(context, it) }
+    }
     val ring = ringTime(wake, sleep, calc)
     if (ringAt(context) != ring) reportRingAt(id, ring)
     scheduleAlarm(context, ring, wake, sleep, macSleep?.id?.takeIf { sleep == macSleep.sleepTime })

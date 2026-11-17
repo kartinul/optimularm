@@ -8,6 +8,7 @@
 
 // settings/{pairId}                        — both read and write, live, last write wins
 { "wakeTime": "07:00", "weekendWakeTime": "09:30" /* optional, Sat & Sun */, "alarmOn": true,
+  "phoneSleep": false, "autoTune": false,   // opt-in, toggled from either app
   "sleepCutoff": "00:00", "lastUpdated" }
 
 // pairings/{pairId}/sleepEvents/{eventId}  — Mac writes on display sleep; eventId = sleepTime in epoch seconds

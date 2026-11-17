@@ -35,7 +35,6 @@ fun loadNights(context: Context): List<Night> {
     }
 }
 
-/** Saves the night and, with auto-tune on, moves feelGoodAfter toward the best-rated value. */
 fun recordNight(context: Context, night: Night) {
     val nights = (loadNights(context) + night).takeLast(KEEP)
     val array = JSONArray(nights.map {
@@ -43,8 +42,6 @@ fun recordNight(context: Context, night: Night) {
             .put("feelGoodAfter", it.feelGoodAfter).put("optimized", it.optimized)
     })
     prefs(context).edit { putString("nights", array.toString()) }
-    val calc = loadCalcPrefs(context)
-    if (calc.autoTune) saveCalcPrefs(context, calc.copy(feelGoodAfter = tunedFeelGoodAfter(nights, calc.feelGoodAfter)))
 }
 
 /** Hill-climbs on ratings: give a value [TRIAL] nights, try its untried neighbours, then settle on the best average. */

@@ -55,6 +55,7 @@ import io.github.kartinul.data.loadCalcPrefs
 import io.github.kartinul.data.saveCalcPrefs
 import io.github.kartinul.nextWake
 import io.github.kartinul.data.loadNights
+import io.github.kartinul.data.saveWakeSettings
 import androidx.compose.material3.Switch
 import io.github.kartinul.ringTime
 import kotlin.math.PI
@@ -183,10 +184,7 @@ fun CalcScreen(
                         color = colors.onSurfaceVariant,
                     )
                 }
-                Switch(checked = calc.autoTune, onCheckedChange = {
-                    calc = calc.copy(autoTune = it)
-                    save()
-                })
+                Switch(checked = settings.autoTune, onCheckedChange = { saveWakeSettings("autoTune" to it) })
             }
         }
 

@@ -44,6 +44,15 @@ struct PhoneTab: View {
                         .padding(.vertical, 8)
                 }
             }
+            if state.paired {
+                Section {
+                    Toggle("Phone screen as bedtime", isOn: setting(\.phoneSleep))
+                    Toggle("Auto-tune from morning ratings", isOn: setting(\.autoTune))
+                } footer: {
+                    Text("Both are off by default. The phone needs usage access for its screen; turn it on there.")
+                        .foregroundStyle(.secondary)
+                }
+            }
             Section {
                 Button(state.pairId == nil ? "Pair a phone" : "Re-pair…") {
                     if state.paired { confirmRepair = true } else { state.repair() }
@@ -58,5 +67,9 @@ struct PhoneTab: View {
         .confirmationDialog("Re-pair with a new phone?", isPresented: $confirmRepair) {
             Button("Re-pair", role: .destructive, action: state.repair)
         }
+    }
+
+    private func setting(_ key: WritableKeyPath<WakeSettings, Bool>) -> Binding<Bool> {
+        Binding(get: { state.settings[keyPath: key] }, set: { on in state.update { $0[keyPath: key] = on } })
     }
 }

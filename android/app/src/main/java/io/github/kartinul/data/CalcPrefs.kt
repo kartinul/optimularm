@@ -10,7 +10,6 @@ data class CalcPrefs(
     val feelGoodBefore: Int = 5,
     val feelGoodAfter: Int = 15,
     val lateNap: Int = 30,
-    val autoTune: Boolean = true, // let morning ratings move feelGoodAfter
 )
 
 private fun prefs(context: Context) = context.getSharedPreferences("calc", Context.MODE_PRIVATE)
@@ -23,7 +22,6 @@ fun loadCalcPrefs(context: Context): CalcPrefs = prefs(context).let {
         feelGoodBefore = it.getInt("feelGoodBefore", defaults.feelGoodBefore),
         feelGoodAfter = it.getInt("feelGoodAfter", defaults.feelGoodAfter),
         lateNap = it.getInt("lateNap", defaults.lateNap),
-        autoTune = it.getBoolean("autoTune", defaults.autoTune),
     )
 }
 
@@ -33,5 +31,4 @@ fun saveCalcPrefs(context: Context, calc: CalcPrefs) = prefs(context).edit {
     putInt("feelGoodBefore", calc.feelGoodBefore)
     putInt("feelGoodAfter", calc.feelGoodAfter)
     putInt("lateNap", calc.lateNap)
-    putBoolean("autoTune", calc.autoTune)
 }

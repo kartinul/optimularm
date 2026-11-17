@@ -19,6 +19,8 @@ data class WakeSettings(
     val weekendWakeTime: String? = null, // Saturday and Sunday; null = same as wakeTime
     val alarmOn: Boolean = true,
     val sleepCutoff: String = "00:00",
+    val phoneSleep: Boolean = false, // also count the phone's screen-off as bedtime (needs usage access)
+    val autoTune: Boolean = false, // let morning ratings move feelGoodAfter
 )
 
 data class SleepEvent(val id: String, val sleepTime: Long)
@@ -33,6 +35,8 @@ private fun DocumentSnapshot.toWakeSettings() = WakeSettings().let { defaults ->
         weekendWakeTime = getString("weekendWakeTime"),
         alarmOn = getBoolean("alarmOn") ?: defaults.alarmOn,
         sleepCutoff = getString("sleepCutoff") ?: defaults.sleepCutoff,
+        phoneSleep = getBoolean("phoneSleep") ?: defaults.phoneSleep,
+        autoTune = getBoolean("autoTune") ?: defaults.autoTune,
     )
 }
 

@@ -11,6 +11,10 @@ struct WakeSettings: Equatable {
     var weekendWakeTime: String?
     var alarmOn = true
     var sleepCutoff = "00:00"
+    /** Phone also counts its own screen-off as bedtime. */
+    var phoneSleep = false
+    /** Morning ratings tune the phone's "wake after cycle end". */
+    var autoTune = false
 }
 
 extension WakeSettings {
@@ -20,10 +24,15 @@ extension WakeSettings {
         weekendWakeTime = fields["weekendWakeTime"] as? String
         alarmOn = fields["alarmOn"] as? Bool ?? defaults.alarmOn
         sleepCutoff = fields["sleepCutoff"] as? String ?? defaults.sleepCutoff
+        phoneSleep = fields["phoneSleep"] as? Bool ?? defaults.phoneSleep
+        autoTune = fields["autoTune"] as? Bool ?? defaults.autoTune
     }
 
     var fields: Fields {
-        var fields: Fields = ["wakeTime": wakeTime, "alarmOn": alarmOn, "sleepCutoff": sleepCutoff, "lastUpdated": Date()]
+        var fields: Fields = [
+            "wakeTime": wakeTime, "alarmOn": alarmOn, "sleepCutoff": sleepCutoff,
+            "phoneSleep": phoneSleep, "autoTune": autoTune, "lastUpdated": Date(),
+        ]
         fields["weekendWakeTime"] = weekendWakeTime
         return fields
     }

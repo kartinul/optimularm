@@ -17,6 +17,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import android.app.TimePickerDialog
+import android.content.Intent
+import android.provider.Settings
 import android.text.format.DateFormat
 import com.google.firebase.firestore.FieldValue
 import io.github.kartinul.data.WakeSettings
@@ -44,7 +46,10 @@ fun SettingsScreen(
 
     Column(modifier.verticalScroll(rememberScrollState())) {
         SectionTitle("Alarm")
-        if (settings != null) WeekendWakeTime(settings)
+        if (settings != null) {
+            WeekendWakeTime(settings)
+            PhoneSleepSwitch(settings, usageAccess = permissions.any { it.name == USAGE_ACCESS && it.granted })
+        }
         AlarmSettings()
         // wallpaper colors need Android 12+; older phones always get the app palette
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
@@ -84,6 +89,24 @@ fun SettingsScreen(
             )
         }
     }
+}
+
+/** Turning it on without usage access also opens the screen that grants it. */
+@Composable
+private fun PhoneSleepSwitch(settings: WakeSettings, usageAccess: Boolean) {
+    val context = LocalContext.current
+    fun set(on: Boolean) {
+        saveWakeSettings("phoneSleep" to on)
+        if (on && !usageAccess) context.startActivity(Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS))
+    }
+    ListItem(
+        headlineContent = { Text("Phone screen as bedtime") },
+        supportingContent = {
+            Text(if (settings.phoneSleep && !usageAccess) "Needs usage access" else "Counts when you put the phone down too, not just the Mac")
+        },
+        trailingContent = { Switch(checked = settings.phoneSleep, onCheckedChange = ::set) },
+        modifier = Modifier.clickable { set(!settings.phoneSleep) },
+    )
 }
 
 /** Off = weekends ring at the usual wake time; on = their own time, picked with the system time picker. */

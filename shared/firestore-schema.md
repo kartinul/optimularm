@@ -7,7 +7,7 @@
   "ringAt" }                                // phone writes its next computed alarm, the Mac shows it
 
 // settings/{pairId}                        — both read and write, live, last write wins
-{ "wakeTime": "07:00", "weekendWakeTime": "09:30" /* optional, Sat & Sun */, "alarmOn": true,
+{ "wakeTime": "07:00", "alarmOn": true,
   "phoneSleep": false, "autoTune": false,   // opt-in, toggled from either app
   "sleepCutoff": "00:00", "lastUpdated" }
 

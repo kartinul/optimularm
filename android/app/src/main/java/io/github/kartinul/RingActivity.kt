@@ -57,10 +57,19 @@ class RingActivity : ComponentActivity() {
         if (loadAlarmPrefs(this).askRating) stopped = true else finish()
     }
 
+    private fun snooze() {
+        snoozeRinging(this)
+        finish()
+    }
+
+    // volume down only ever snoozes, so a half-asleep press can't switch the alarm off
     override fun onKeyDown(keyCode: Int, event: KeyEvent): Boolean {
-        val volumeKey = keyCode == KeyEvent.KEYCODE_VOLUME_UP || keyCode == KeyEvent.KEYCODE_VOLUME_DOWN
-        if (!volumeKey || stopped) return super.onKeyDown(keyCode, event)
-        stop()
+        if (stopped) return super.onKeyDown(keyCode, event)
+        when (keyCode) {
+            KeyEvent.KEYCODE_VOLUME_UP -> stop()
+            KeyEvent.KEYCODE_VOLUME_DOWN -> if (canSnooze(this)) snooze()
+            else -> return super.onKeyDown(keyCode, event)
+        }
         return true
     }
 
@@ -82,10 +91,7 @@ class RingActivity : ComponentActivity() {
             Text("Stop", style = MaterialTheme.typography.titleLarge)
         }
         Spacer(Modifier.height(16.dp))
-        if (canSnooze(this)) OutlinedButton(onClick = {
-            snoozeRinging(this)
-            finish()
-        }) {
+        if (canSnooze(this)) OutlinedButton(onClick = ::snooze) {
             Text("Snooze ${loadAlarmPrefs(this@RingActivity).snoozeMinutes} min")
         }
     }

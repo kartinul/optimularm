@@ -1,35 +1,10 @@
 package io.github.kartinul
 
 import io.github.kartinul.data.Night
-import io.github.kartinul.data.WakeSettings
 import io.github.kartinul.data.tunedFeelGoodAfter
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Test
-import java.util.Calendar
-
-class NextWakeTest {
-    // 2026-10-16 is a Friday
-    private fun at(day: Int, hour: Int, minute: Int) = Calendar.getInstance().apply {
-        clear()
-        set(2026, Calendar.OCTOBER, day, hour, minute)
-    }
-
-    private val settings = WakeSettings(wakeTime = "07:00", weekendWakeTime = "09:30")
-
-    @Test
-    fun fridayNightWakesAtWeekendTime() = assertEquals(at(17, 9, 30), nextWake(settings, at(16, 23, 0)))
-
-    @Test
-    fun sundayNightWakesAtWeekdayTime() = assertEquals(at(19, 7, 0), nextWake(settings, at(18, 23, 0)))
-
-    @Test
-    fun saturdayAfterWeekendTimeMeansSunday() = assertEquals(at(18, 9, 30), nextWake(settings, at(17, 10, 0)))
-
-    @Test
-    fun noWeekendTimeMatchesNextOccurrence() =
-        assertEquals(nextOccurrence("07:00", at(16, 23, 0)), nextWake(WakeSettings(wakeTime = "07:00"), at(16, 23, 0)))
-}
 
 class LastScreenOffTest {
     private val m = MINUTE

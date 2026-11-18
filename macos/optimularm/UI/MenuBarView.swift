@@ -72,22 +72,6 @@ private struct AlarmPanel: View {
                     QuarterStepper(time: settings.wakeTime) { time in state.update { $0.wakeTime = time } }
                 }
                 Divider()
-                Row(icon: "calendar", title: "Weekends") {
-                    if let weekend = settings.weekendWakeTime {
-                        QuarterStepper(time: weekend) { time in state.update { $0.weekendWakeTime = time } }
-                        Button("Same as weekdays", systemImage: "xmark.circle.fill") {
-                            state.update { $0.weekendWakeTime = nil }
-                        }
-                        .labelStyle(.iconOnly)
-                        .buttonStyle(.borderless)
-                        .foregroundStyle(.secondary)
-                    } else {
-                        Button("Same") { state.update { $0.weekendWakeTime = settings.wakeTime } }
-                            .buttonStyle(.borderless)
-                            .foregroundStyle(.secondary)
-                    }
-                }
-                Divider()
                 Row(icon: "bed.double", title: "Bedtime") {
                     QuarterStepper(time: settings.sleepCutoff) { time in state.update { $0.sleepCutoff = time } }
                 }

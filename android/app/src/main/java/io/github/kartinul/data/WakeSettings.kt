@@ -16,7 +16,6 @@ import java.util.Date
 
 data class WakeSettings(
     val wakeTime: String = "07:00",
-    val weekendWakeTime: String? = null, // Saturday and Sunday; null = same as wakeTime
     val alarmOn: Boolean = true,
     val sleepCutoff: String = "00:00",
     val phoneSleep: Boolean = false, // also count the phone's screen-off as bedtime (needs usage access)
@@ -32,7 +31,6 @@ private fun latestSleepQuery(id: String) =
 private fun DocumentSnapshot.toWakeSettings() = WakeSettings().let { defaults ->
     WakeSettings(
         wakeTime = getString("wakeTime") ?: defaults.wakeTime,
-        weekendWakeTime = getString("weekendWakeTime"),
         alarmOn = getBoolean("alarmOn") ?: defaults.alarmOn,
         sleepCutoff = getString("sleepCutoff") ?: defaults.sleepCutoff,
         phoneSleep = getBoolean("phoneSleep") ?: defaults.phoneSleep,

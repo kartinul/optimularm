@@ -65,22 +65,7 @@ fun nextOccurrence(time: String, now: Calendar = Calendar.getInstance()): Calend
     }
 }
 
-/** The first wake time after [from]: [WakeSettings.weekendWakeTime] on Saturday and Sunday, else [WakeSettings.wakeTime]. */
-fun nextWake(settings: WakeSettings, from: Calendar = Calendar.getInstance()): Calendar {
-    val day = from.clone() as Calendar
-    while (true) {
-        val weekend = day.get(Calendar.DAY_OF_WEEK) in listOf(Calendar.SATURDAY, Calendar.SUNDAY)
-        val (hour, minute) = (settings.weekendWakeTime?.takeIf { weekend } ?: settings.wakeTime).split(":").map(String::toInt)
-        val wake = (day.clone() as Calendar).apply {
-            set(Calendar.HOUR_OF_DAY, hour)
-            set(Calendar.MINUTE, minute)
-            set(Calendar.SECOND, 0)
-            set(Calendar.MILLISECOND, 0)
-        }
-        if (wake.after(from)) return wake
-        day.add(Calendar.DAY_OF_MONTH, 1)
-    }
-}
+fun nextWake(settings: WakeSettings, from: Calendar = Calendar.getInstance()) = nextOccurrence(settings.wakeTime, from)
 
 fun scheduleAlarm(context: Context, millis: Long, wake: Long, sleep: Long?, eventId: String?) {
     val showIntent = PendingIntent.getActivity(

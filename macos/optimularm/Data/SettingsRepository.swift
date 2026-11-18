@@ -7,8 +7,6 @@ import Foundation
 
 struct WakeSettings: Equatable {
     var wakeTime = "07:00"
-    /** Saturday and Sunday's wake time; nil = same as [wakeTime]. */
-    var weekendWakeTime: String?
     var alarmOn = true
     var sleepCutoff = "00:00"
     /** Phone also counts its own screen-off as bedtime. */
@@ -21,7 +19,6 @@ extension WakeSettings {
     init(_ fields: Fields) {
         let defaults = WakeSettings()
         wakeTime = fields["wakeTime"] as? String ?? defaults.wakeTime
-        weekendWakeTime = fields["weekendWakeTime"] as? String
         alarmOn = fields["alarmOn"] as? Bool ?? defaults.alarmOn
         sleepCutoff = fields["sleepCutoff"] as? String ?? defaults.sleepCutoff
         phoneSleep = fields["phoneSleep"] as? Bool ?? defaults.phoneSleep
@@ -29,12 +26,10 @@ extension WakeSettings {
     }
 
     var fields: Fields {
-        var fields: Fields = [
+        [
             "wakeTime": wakeTime, "alarmOn": alarmOn, "sleepCutoff": sleepCutoff,
             "phoneSleep": phoneSleep, "autoTune": autoTune, "lastUpdated": Date(),
         ]
-        fields["weekendWakeTime"] = weekendWakeTime
-        return fields
     }
 }
 
@@ -43,7 +38,7 @@ func fetchSettings(_ pairId: String) async throws -> WakeSettings {
 }
 
 func saveSettings(_ pairId: String, _ settings: WakeSettings) async throws {
-    try await setDocument("settings/\(pairId)", settings.fields, delete: settings.weekendWakeTime == nil ? ["weekendWakeTime"] : [])
+    try await setDocument("settings/\(pairId)", settings.fields)
 }
 
 private let timeFormat: DateFormatter = {

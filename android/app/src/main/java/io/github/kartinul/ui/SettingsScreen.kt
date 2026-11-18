@@ -16,11 +16,8 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
-import android.app.TimePickerDialog
 import android.content.Intent
 import android.provider.Settings
-import android.text.format.DateFormat
-import com.google.firebase.firestore.FieldValue
 import io.github.kartinul.data.WakeSettings
 import io.github.kartinul.data.saveWakeSettings
 import io.github.kartinul.data.unpair
@@ -47,7 +44,6 @@ fun SettingsScreen(
     Column(modifier.verticalScroll(rememberScrollState())) {
         SectionTitle("Alarm")
         if (settings != null) {
-            WeekendWakeTime(settings)
             PhoneSleepSwitch(settings, usageAccess = permissions.any { it.name == USAGE_ACCESS && it.granted })
         }
         AlarmSettings()
@@ -106,29 +102,6 @@ private fun PhoneSleepSwitch(settings: WakeSettings, usageAccess: Boolean) {
         },
         trailingContent = { Switch(checked = settings.phoneSleep, onCheckedChange = ::set) },
         modifier = Modifier.clickable { set(!settings.phoneSleep) },
-    )
-}
-
-/** Off = weekends ring at the usual wake time; on = their own time, picked with the system time picker. */
-@Composable
-private fun WeekendWakeTime(settings: WakeSettings) {
-    val context = LocalContext.current
-    val weekend = settings.weekendWakeTime
-    fun pick(time: String) {
-        val (hour, minute) = time.split(":").map(String::toInt)
-        TimePickerDialog(context, { _, h, m -> saveWakeSettings("weekendWakeTime" to "%02d:%02d".format(h, m)) },
-            hour, minute, DateFormat.is24HourFormat(context)).show()
-    }
-    ListItem(
-        headlineContent = { Text("Weekend wake time") },
-        supportingContent = { Text(weekend?.let { "Sat & Sun at " + displayTime(context, it) } ?: "Same as weekdays") },
-        trailingContent = {
-            Switch(
-                checked = weekend != null,
-                onCheckedChange = { on -> if (on) pick(settings.wakeTime) else saveWakeSettings("weekendWakeTime" to FieldValue.delete()) },
-            )
-        },
-        modifier = Modifier.clickable { pick(weekend ?: settings.wakeTime) },
     )
 }
 

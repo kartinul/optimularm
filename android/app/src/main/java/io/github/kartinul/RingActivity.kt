@@ -1,6 +1,7 @@
 package io.github.kartinul
 
 import android.os.Bundle
+import android.view.KeyEvent
 import android.text.format.DateFormat
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -19,7 +20,6 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -34,24 +34,34 @@ import io.github.kartinul.data.saveRating
 import io.github.kartinul.ui.theme.OptimularmTheme
 
 class RingActivity : ComponentActivity() {
+    private var stopped by mutableStateOf(false)
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
             OptimularmTheme {
-                var stopped by remember { mutableStateOf(false) }
                 Surface(Modifier.fillMaxSize()) {
                     Column(
                         verticalArrangement = Arrangement.Center,
                         horizontalAlignment = Alignment.CenterHorizontally,
                     ) {
-                        if (stopped) Rating() else Ringing(onStop = {
-                            stopRinging(this@RingActivity)
-                            stopped = true
-                        })
+                        if (stopped) Rating() else Ringing(onStop = ::stop)
                     }
                 }
             }
         }
+    }
+
+    private fun stop() {
+        stopRinging(this)
+        stopped = true
+    }
+
+    override fun onKeyDown(keyCode: Int, event: KeyEvent): Boolean {
+        val volumeKey = keyCode == KeyEvent.KEYCODE_VOLUME_UP || keyCode == KeyEvent.KEYCODE_VOLUME_DOWN
+        if (!volumeKey || stopped) return super.onKeyDown(keyCode, event)
+        stop()
+        return true
     }
 
     @Composable

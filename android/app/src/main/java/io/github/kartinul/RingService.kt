@@ -67,6 +67,8 @@ class RingService : Service() {
             this, ALARM_NOTIFICATION_ID, notification(), ServiceInfo.FOREGROUND_SERVICE_TYPE_MEDIA_PLAYBACK
         )
         if (player != null) return
+        // the full-screen intent only shows a banner while the phone is in use; the ring screen is what catches volume keys
+        startActivity(Intent(this, RingActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
         val alarm = loadAlarmPrefs(this)
         val sound = alarm.ringtone?.let(Uri::parse) ?: RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM)
             ?: RingtoneManager.getDefaultUri(RingtoneManager.TYPE_RINGTONE)

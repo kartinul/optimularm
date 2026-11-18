@@ -45,6 +45,13 @@ fun checkPermissions(context: Context): List<Permission> {
             power.isIgnoringBatteryOptimizations(packageName),
             Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS, packageUri),
         ),
+        // lets the ring screen open over other apps instead of a banner
+        Permission(
+            "Show alarm over apps",
+            Settings.canDrawOverlays(context),
+            Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION, packageUri),
+            required = false,
+        ),
         Permission(
             USAGE_ACCESS,
             context.getSystemService(AppOpsManager::class.java)

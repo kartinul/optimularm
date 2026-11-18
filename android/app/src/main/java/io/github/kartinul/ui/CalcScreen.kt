@@ -55,6 +55,11 @@ import io.github.kartinul.data.loadCalcPrefs
 import io.github.kartinul.data.saveCalcPrefs
 import io.github.kartinul.nextWake
 import io.github.kartinul.data.loadNights
+import io.github.kartinul.data.Night
+import io.github.kartinul.data.saveNights
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.FilledTonalButton
 import io.github.kartinul.data.saveWakeSettings
 import androidx.compose.material3.Switch
 import io.github.kartinul.ringTime
@@ -188,11 +193,40 @@ fun CalcScreen(
             }
         }
 
-        val nights = remember { loadNights(context).reversed() }
+        var nights by remember { mutableStateOf(loadNights(context)) }
+        var editing by remember { mutableStateOf<Int?>(null) }
+        fun updateNights(changed: List<Night>) {
+            nights = changed
+            editing = null
+            saveNights(context, changed)
+        }
+        val day = { time: Long -> DateFormat.format("EEE d", time).toString() }
+        editing?.let { index ->
+            AlertDialog(
+                onDismissRequest = { editing = null },
+                title = { Text("Rate ${day(nights[index].ring)}") },
+                text = {
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        for (rating in 1..5) FilledTonalButton(
+                            onClick = { updateNights(nights.toMutableList().apply { set(index, nights[index].copy(rating = rating)) }) },
+                            modifier = Modifier.weight(1f),
+                            contentPadding = PaddingValues(0.dp),
+                        ) { Text("$rating") }
+                    }
+                },
+                confirmButton = { TextButton(onClick = { editing = null }) { Text("Cancel") } },
+                dismissButton = {
+                    TextButton(onClick = { updateNights(nights.filterIndexed { i, _ -> i != index }) }) { Text("Delete") }
+                },
+            )
+        }
         if (nights.isNotEmpty()) Section("Last nights · avg %.1f".format(nights.map { it.rating }.average())) {
-            val day = { time: Long -> DateFormat.format("EEE d", time).toString() }
-            nights.take(14).forEach { night ->
-                Row(Modifier.fillMaxWidth().padding(vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
+            nights.indices.reversed().forEach { index ->
+                val night = nights[index]
+                Row(
+                    Modifier.fillMaxWidth().clickable { editing = index }.padding(vertical = 8.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
                     Text(day(night.ring), style = MaterialTheme.typography.bodyLarge, modifier = Modifier.width(72.dp))
                     Text(
                         (night.sleep?.let(format) ?: "—") + " → " + format(night.ring),

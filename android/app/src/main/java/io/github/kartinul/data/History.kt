@@ -35,9 +35,10 @@ fun loadNights(context: Context): List<Night> {
     }
 }
 
-fun recordNight(context: Context, night: Night) {
-    val nights = (loadNights(context) + night).takeLast(KEEP)
-    val array = JSONArray(nights.map {
+fun recordNight(context: Context, night: Night) = saveNights(context, loadNights(context) + night)
+
+fun saveNights(context: Context, nights: List<Night>) {
+    val array = JSONArray(nights.takeLast(KEEP).map {
         JSONObject().put("sleep", it.sleep ?: 0).put("ring", it.ring).put("rating", it.rating)
             .put("feelGoodAfter", it.feelGoodAfter).put("optimized", it.optimized)
     })

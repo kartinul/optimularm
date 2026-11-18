@@ -54,7 +54,7 @@ class RingActivity : ComponentActivity() {
 
     private fun stop() {
         stopRinging(this)
-        stopped = true
+        if (loadAlarmPrefs(this).askRating) stopped = true else finish()
     }
 
     override fun onKeyDown(keyCode: Int, event: KeyEvent): Boolean {

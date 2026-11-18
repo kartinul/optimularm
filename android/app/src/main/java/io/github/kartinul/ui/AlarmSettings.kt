@@ -83,6 +83,7 @@ fun AlarmSettings() {
     ChoiceItem("Snoozes allowed", SNOOZE_LIMITS, alarm.maxSnoozes, { "$it" }) {
         update(alarm.copy(maxSnoozes = it))
     }
+    SwitchItem("Ask how I slept", alarm.askRating) { update(alarm.copy(askRating = it)) }
     ListItem(
         headlineContent = { Text("Test alarm") },
         supportingContent = { Text("Rings now with these settings") },

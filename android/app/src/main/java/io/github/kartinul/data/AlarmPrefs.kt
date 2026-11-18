@@ -11,6 +11,7 @@ data class AlarmPrefs(
     val vibrate: Boolean = true,
     val snoozeMinutes: Int = 10,
     val maxSnoozes: Int = 3,
+    val askRating: Boolean = true, // "How did you sleep?" after stopping; auto-tune learns from it
 )
 
 val SNOOZE_LENGTHS = listOf(5, 10, 15)
@@ -29,6 +30,7 @@ fun loadAlarmPrefs(context: Context): AlarmPrefs = prefs(context).let {
         snoozeMinutes = it.getInt("snoozeMinutes", defaults.snoozeMinutes).takeIf(SNOOZE_LENGTHS::contains)
             ?: defaults.snoozeMinutes,
         maxSnoozes = it.getInt("maxSnoozes", defaults.maxSnoozes).takeIf(SNOOZE_LIMITS::contains) ?: defaults.maxSnoozes,
+        askRating = it.getBoolean("askRating", defaults.askRating),
     )
 }
 
@@ -39,6 +41,7 @@ fun saveAlarmPrefs(context: Context, alarm: AlarmPrefs) = prefs(context).edit {
     putBoolean("vibrate", alarm.vibrate)
     putInt("snoozeMinutes", alarm.snoozeMinutes)
     putInt("maxSnoozes", alarm.maxSnoozes)
+    putBoolean("askRating", alarm.askRating)
 }
 
 /** Snoozes used since the alarm last rang for real. */
